@@ -1,0 +1,3 @@
+[submodule "subworkflows/rnaseq"]
+	path = subworkflows/rnaseq
+	url = git@github.com:ebi-gene-expression-group/rnaseq.git
