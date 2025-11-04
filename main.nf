@@ -31,7 +31,7 @@ params.outdir = "${atlasProd}/analysis/baseline/rnaseq/experiments/${params.EXP_
 
 workflow {
     samplesheet = create_samplesheet(params.EXP_ID)
-    run_rnaseq(samplesheet, params.EXP_ID)
+    // run_rnaseq(samplesheet, params.EXP_ID)
 }
 
 
@@ -49,7 +49,8 @@ process create_samplesheet {
     script:
     """
     echo "Creating samplesheet for ${EXP_ID}"
-    /bin/create_samplesheet.sh ${EXP_ID} > samplesheet.csv
+    grep "<assay>" E-MTAB-9566-configuration.xml | sed 's/\s*<\/*assay>//g' > ${EXP_ID}_ids.csv
+    /bin/create_samplesheet.sh ${EXP_ID}_ids.csv > ${EXP_ID}_samplesheet.csv
     """
 }
 
