@@ -91,12 +91,12 @@ process GET_SPECIES {
 
   no=\$(printf "%s\\n" "\${species_list-}" | grep -c . || true)
 
-  >&2 printf "[DBG] EXP_ID=%s no=%s species_list=<%s>\\n" "\$EXP_ID" "\$no" "\${species_list-}"
+  >&2 printf "[DBG] EXP_ID=%s no=%s species_list=<%s>\\n" "$EXP_ID" "\$no" "\${species_list-}"
 
   if [ "\$no" -eq 1 ]; then
     printf "%s\\n" "\$species_list"   # stdout → val species
   else
-    >&2 printf "WARN: %s Organism entries for %s\\n" "\$no" "\$EXP_ID"
+    >&2 printf "WARN: %s Organism entries for %s\\n" "\$no" "$EXP_ID"
     exit 1
   fi
   """
