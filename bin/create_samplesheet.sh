@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
-# Create a samplesheet.csv file from an input ids.csv
+# Create a samplesheet.csv file from an input config.xml or ids.csv
+# The config.xml file is the experiment definition file for experiments, designed for use in Expression Atlas. 
 
-usage() { echo "Usage: $0 [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>]" 1>&2; } 
+usage() { echo """
+Usage: 
+$0 [-x <config.xml>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>]
+or
+$0 [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>]
+""" 1>&2; } 
 
 while getopts ":i:s:m:" o; do
     case "${o}" in
@@ -19,9 +25,18 @@ while getopts ":i:s:m:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${i}" ] || [ -z "${s}" ] || [ -z "${m}" ]; then
+# Assign and re-assign variables for readability, 
+
+fileIdsType="xml"
+
+if ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ]; then
     usage
     exit 1
+elif [ -n "${x}" ]; then
+    fileIds=$x
+else
+    fileIds=$i
+    fileIdsType="csv"
 fi
 
 # Re-assign variables for readability
@@ -55,14 +70,25 @@ get_library_path() {
             prefix="$(printf %03d $digits)/"
         fi
     fi
-    echo "${mountEraPub}/${subDir}/${prefix}${library}"
+    echo "${rootDir}/${subDir}/${prefix}${library}"
 }
 
+get_ids_from_input () {
+    local fileIds=$1
+    local fileIdsType=$2
+    if [ $fileIdsType == 'xml' ]; then
+        libraries=$( grep "<assay>" "$fileIds" | sed 's/\s*<\/*assay>//g' )
+    else
+        libraries=$( cat $fileIds )
+    fi
+    echo "${libraries}"
+}
 
 # Main
 echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
-while IFS= read -r library; do
+for library in $( get_ids_from_input $fileIds $fileIdsType ); 
+do
     libraryPath=$(get_library_path  "$library" "$mountEraPub")
     libraryFiles=$(find "${libraryPath}" -maxdepth 1 -type f | paste -sd "," - ) 
     echo "${libraryFiles},auto" >> $fileSamples
-done < "$fileIds"
+done
