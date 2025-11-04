@@ -21,8 +21,16 @@ if (!atlasProd) {
 // Check that REFERENCES_PATH is defined in environment
 def referencePath = System.getenv('BULK_REFERENCES_DIR')
 if (!referencePath) {
-    log.error "Environment variable REFERENCES_PATH is not set."
+    log.error "Environment variable BULK_REFERENCES_DIR is not set."
     log.info  "Please set it, e.g.: export REFERENCES_PATH=/path/to/atlas"
+    System.exit(1)
+}
+
+
+def era_public_mount_path = System.getenv('ERA_PUBLIC_MOUNT_PATH')
+if (!era_public_mount_path) {
+    log.error "Environment variable ERA_PUBLIC_MOUNT_PATH  is not set."
+    log.info  "Please set it, e.g.: export ERA_PUBLIC_MOUNT_PATH=/path/to/atlas"
     System.exit(1)
 }
 
@@ -56,7 +64,7 @@ process create_samplesheet {
     
     grep "<assay>" "\${CONFIG_FILE}" | sed 's/\\s*<\\/*assay>//g' > "\${IDS_CSV}"
 
-    bash "${projectDir}/bin/create_samplesheet.sh" -i "\${IDS_CSV}" -s "\${SAMPLESHEET}"
+    bash "${projectDir}/bin/create_samplesheet.sh" -i "\${IDS_CSV}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}"
     """
 }
 
