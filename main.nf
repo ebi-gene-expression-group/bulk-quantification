@@ -39,7 +39,7 @@ params.outdir = "${atlasProd}/analysis/baseline/rna-seq/experiments/${params.EXP
 
 workflow {
     samplesheet = create_samplesheet(params.EXP_ID)
-    // run_rnaseq(samplesheet, params.EXP_ID)
+    run_rnaseq(samplesheet, params.EXP_ID)
 }
 
 
@@ -77,26 +77,42 @@ process run_rnaseq {
     val  EXP_ID
 
     output:
-    path "${EXP_ID}.rnaseq.flag"
+    path "${EXP_ID}.rnaseq.done"
 
     script:
     """
     set -euo pipefail
 
-    # Prepare params file dynamically
     export EXP_ID="${EXP_ID}"
+    export SAMPLESHEET="${samplesheet}"
+    export OUTDIR="${params.outdir}/rnaseq"
 
-    echo "Running RNA-seq subworkflow for ${EXP_ID}"
+    # Fetch species (robust to missing attributes)
+    SPECIES=\$(curl -s "https://www.ebi.ac.uk/biostudies/api/v1/studies/\${EXP_ID}" \\
+      | jq -r '(.section.attributes[]? | select(.name=="Organism") | .value) // empty')
 
-    envsubst < params.template.json > ${EXP_ID}_params.json
+    if [ -z "\${SPECIES}" ]; then
+      echo "WARN: Organism not found for \${EXP_ID}; defaulting to 'unknown'"
+      SPECIES="unknown"
+      exit 1
+    fi
+
+    export SPECIES
+
+    echo "Running RNA-seq subworkflow for \${EXP_ID} (species=\${SPECIES})"
+
+    # Render params file from template (must reference \$EXP_ID, \$SAMPLESHEET, \$OUTDIR, \$SPECIES)
+    envsubst < "\${projectDir}/params.template.json" > "\${EXP_ID}_params.json"
+    echo "Rendered params:"
+    cat "\${EXP_ID}_params.json"
 
     nextflow run subworkflows/rnaseq/main.nf \\
-        -params-file ${EXP_ID}_params.json \\
-        -C conf/rnaseq.config \\
+        -params-file "\${EXP_ID}_params.json" \\
+        -C "\${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave
 
-    # Mark success
-    touch ${EXP_ID}.rnaseq.done
+    # Success flag for downstream logic / idempotency
+    touch "\${EXP_ID}.rnaseq.done"
     """
 }
