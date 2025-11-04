@@ -39,8 +39,6 @@ else
     fileIdsType="csv"
 fi
 
-# Re-assign variables for readability
-fileIds=$i
 fileSamples=$s
 mountEraPub=$m
 
@@ -86,8 +84,7 @@ get_ids_from_input () {
 
 # Main
 echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
-for library in $( get_ids_from_input $fileIds $fileIdsType ); 
-do
+for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     libraryPath=$(get_library_path  "$library" "$mountEraPub")
     libraryFiles=$(find "${libraryPath}" -maxdepth 1 -type f | paste -sd "," - ) 
     echo "${libraryFiles},auto" >> $fileSamples
