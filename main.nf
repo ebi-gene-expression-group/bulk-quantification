@@ -70,34 +70,38 @@ process create_samplesheet {
 }
 
 
-process GET_SPECIES {
+pprocess GET_SPECIES {
   input:
     val EXP_ID
 
   output:
     val species
 
-  script:
-  """
+  shell:
+  '''
   set -euo pipefail
 
   URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
 
-  # Prefer jq (JSON-safe). If you must avoid jq, see grep/sed version below.
+  # JSON-safe extraction
   species_list=$(curl -fsS "$URL" \
-    | jq -r '.section.attributes[]? | select(.name=="Organism") | .value' \
-    | sort -u | sed 's/ /_/g')
+  | tr -d '\r' \
+  | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
+  | sort -u | sed 's/ /_/g' || true)
 
-  no=$(printf "%s\n" "$species_list" | grep -c . || true)
+  no=$(printf "%s\n" "${species_list-}" | grep -c . || true)
+
+  >&2 printf "[DBG] EXP_ID=%s no=%s species_list=<%s>\n" "$EXP_ID" "$no" "${species_list-}"
 
   if [ "$no" -eq 1 ]; then
-    printf "%s\n" "$species_list"   # <-- ONLY the species goes to stdout (the process output)
+    printf "%s\n" "$species_list"     # <-- the only stdout; becomes `val species`
   else
     >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$EXP_ID"
     exit 1
   fi
-  """
+  '''
 }
+
 
 process run_rnaseq {
     publishDir "${params.outdir}/rnaseq", mode: 'copy'
