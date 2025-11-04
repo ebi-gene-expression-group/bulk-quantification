@@ -75,7 +75,7 @@ process GET_SPECIES {
     val EXP_ID
 
   output:
-    val species
+    stdout emit: species
 
   script:
   """
