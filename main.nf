@@ -77,29 +77,30 @@ process GET_SPECIES {
   output:
     val species
 
-  shell:
-  '''
+  script:
+  """
   set -euo pipefail
 
-  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
+  EXP_ID="\$1"
+  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/\${EXP_ID}"
 
-  # JSON-safe extraction
-  species_list=$(curl -fsS "$URL" \
-  | tr -d '\r' \
-  | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
-  | sort -u | sed 's/ /_/g' || true)
+  # Extract species names
+  species_list=\$(curl -fsS "\$URL" \
+    | tr -d '\\r' \
+    | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
+    | sort -u | sed 's/ /_/g' || true)
 
-  no=$(printf "%s\n" "${species_list-}" | grep -c . || true)
+  no=\$(printf "%s\\n" "\${species_list-}" | grep -c . || true)
 
-  >&2 printf "[DBG] EXP_ID=%s no=%s species_list=<%s>\n" "$EXP_ID" "$no" "${species_list-}"
+  >&2 printf "[DBG] EXP_ID=%s no=%s species_list=<%s>\\n" "\$EXP_ID" "\$no" "\${species_list-}"
 
-  if [ "$no" -eq 1 ]; then
-    printf "%s\n" "$species_list"     # <-- the only stdout; becomes `val species`
+  if [ "\$no" -eq 1 ]; then
+    printf "%s\\n" "\$species_list"   # stdout → val species
   else
-    >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$EXP_ID"
+    >&2 printf "WARN: %s Organism entries for %s\\n" "\$no" "\$EXP_ID"
     exit 1
   fi
-  '''
+  """
 }
 
 
