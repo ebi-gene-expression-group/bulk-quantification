@@ -77,6 +77,7 @@ process run_rnaseq {
 
     nextflow run subworkflows/rnaseq/main.nf \\
         -params-file ${EXP_ID}_params.json \\
+        -C conf/rnaseq.config \\
         -profile singularity \\
         --without-wave
 
