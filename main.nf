@@ -81,8 +81,7 @@ process GET_SPECIES {
   """
   set -euo pipefail
 
-  EXP_ID="\$1"
-  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/\${EXP_ID}"
+  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
 
   # Extract species names
   species_list=\$(curl -fsS "\$URL" \
