@@ -79,20 +79,21 @@ process GET_SPECIES {
 
   script:
   """
+  set -euo pipefail
+
   URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
 
-  species_list=\$(curl -s "\$URL" \
-    | grep -A1 '"name" : "Organism"' \
-    | grep '"value"' \
-    | sed -E 's/.*"value" : "(.*)".*/\\1/' \
+  # Prefer jq (JSON-safe). If you must avoid jq, see grep/sed version below.
+  species_list=$(curl -fsS "$URL" \
+    | jq -r '.section.attributes[]? | select(.name=="Organism") | .value' \
     | sort -u | sed 's/ /_/g')
 
-  no_of_species=\$(printf "%s\\n" "\$species_list" | grep -c .)
+  no=$(printf "%s\n" "$species_list" | grep -c . || true)
 
-  if [ "\$no_of_species" -eq 1 ]; then
-    echo "\$species_list"   # <- this becomes the `val species` output
+  if [ "$no" -eq 1 ]; then
+    printf "%s\n" "$species_list"   # <-- ONLY the species goes to stdout (the process output)
   else
-    >&2 echo "WARN: \$no_of_species Organism entries for ${EXP_ID}; exiting…"
+    >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$EXP_ID"
     exit 1
   fi
   """
