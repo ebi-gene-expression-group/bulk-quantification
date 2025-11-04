@@ -88,14 +88,14 @@ process run_rnaseq {
     export OUTDIR="${params.outdir}/rnaseq"
 
     # Fetch species (robust to missing attributes)
-    SPECIES=\$(curl -s "https://www.ebi.ac.uk/biostudies/api/v1/studies/\${EXP_ID}" \\
-      | jq -r '(.section.attributes[]? | select(.name=="Organism") | .value) // empty')
-
-    if [ -z "\${SPECIES}" ]; then
-      echo "WARN: Organism not found for \${EXP_ID}; defaulting to 'unknown'"
-      SPECIES="unknown"
-      exit 1
+    no_of_species=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | wc -l)
+    if [ "\${no_of_species}" eq 1 ]; then
+        SPECIES=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | sed 's/ /_/g')
+    else
+        echo "WARN: \${no_of_species} Organism found for \${EXP_ID}; Exiting..."
+        exit 1
     fi
+
 
     export SPECIES
 
