@@ -89,7 +89,7 @@ process run_rnaseq {
 
     # Fetch species (robust to missing attributes)
     no_of_species=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | wc -l)
-    if [ "\${no_of_species}" eq 1 ]; then
+    if [ "\${no_of_species}" -eq 1 ]; then
         SPECIES=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | sed 's/ /_/g')
     else
         echo "WARN: \${no_of_species} Organism found for \${EXP_ID}; Exiting..."
