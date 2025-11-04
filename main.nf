@@ -70,7 +70,7 @@ process create_samplesheet {
 }
 
 
-pprocess GET_SPECIES {
+process GET_SPECIES {
   input:
     val EXP_ID
 
