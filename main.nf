@@ -102,13 +102,13 @@ process run_rnaseq {
     echo "Running RNA-seq subworkflow for \${EXP_ID} (species=\${SPECIES})"
 
     # Render params file from template (must reference \$EXP_ID, \$SAMPLESHEET, \$OUTDIR, \$SPECIES)
-    envsubst < "\${projectDir}/params.template.json" > "\${EXP_ID}_params.json"
+    envsubst < "${projectDir}/params.template.json" > "\${EXP_ID}_params.json"
     echo "Rendered params:"
     cat "\${EXP_ID}_params.json"
 
     nextflow run subworkflows/rnaseq/main.nf \\
         -params-file "\${EXP_ID}_params.json" \\
-        -C "\${projectDir}/conf/rnaseq.config" \\
+        -C "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave
 
