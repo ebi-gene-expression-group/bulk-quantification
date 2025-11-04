@@ -49,7 +49,7 @@ process create_samplesheet {
     script:
     """
     echo "Creating samplesheet for ${EXP_ID}"
-    grep "<assay>" E-MTAB-9566-configuration.xml | sed 's/\s*<\/*assay>//g' > ${EXP_ID}_ids.csv
+    grep "<assay>" ${params.outdir}/${EXP_ID}-configuration.xml | sed 's/\s*<\/*assay>//g' > ${EXP_ID}_ids.csv
     /bin/create_samplesheet.sh ${EXP_ID}_ids.csv > ${EXP_ID}_samplesheet.csv
     """
 }
