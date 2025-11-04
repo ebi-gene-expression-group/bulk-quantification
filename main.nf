@@ -39,7 +39,8 @@ params.outdir = "${atlasProd}/analysis/baseline/rna-seq/experiments/${params.EXP
 
 workflow {
     samplesheet = create_samplesheet(params.EXP_ID)
-    run_rnaseq(samplesheet, params.EXP_ID)
+    species_ch = GET_SPECIES(params.EXP_ID)
+    run_rnaseq(samplesheet, params.EXP_ID, species_ch)
 }
 
 
@@ -69,12 +70,41 @@ process create_samplesheet {
 }
 
 
+process GET_SPECIES {
+  input:
+    val EXP_ID
+
+  output:
+    val species
+
+  script:
+  """
+  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
+
+  species_list=\$(curl -s "\$URL" \
+    | grep -A1 '"name" : "Organism"' \
+    | grep '"value"' \
+    | sed -E 's/.*"value" : "(.*)".*/\\1/' \
+    | sort -u | sed 's/ /_/g')
+
+  no_of_species=\$(printf "%s\\n" "\$species_list" | grep -c .)
+
+  if [ "\$no_of_species" -eq 1 ]; then
+    echo "\$species_list"   # <- this becomes the `val species` output
+  else
+    >&2 echo "WARN: \$no_of_species Organism entries for ${EXP_ID}; exiting…"
+    exit 1
+  fi
+  """
+}
+
 process run_rnaseq {
     publishDir "${params.outdir}/rnaseq", mode: 'copy'
 
     input:
     path samplesheet
     val  EXP_ID
+    val SPECIES
 
     output:
     path "${EXP_ID}.rnaseq.done"
@@ -87,17 +117,7 @@ process run_rnaseq {
     export SAMPLESHEET="${samplesheet}"
     export OUTDIR="${params.outdir}/rnaseq"
 
-    # Fetch species (robust to missing attributes)
-    no_of_species=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | wc -l)
-    if [ "\${no_of_species}" -eq 1 ]; then
-        SPECIES=\$(curl -s https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-8621 | grep -A1 '"name" : "Organism"' | grep '"value"' | sed -E 's/.*"value" : "(.*)".*/\1/' | sort -u | sed 's/ /_/g')
-    else
-        echo "WARN: \${no_of_species} Organism found for \${EXP_ID}; Exiting..."
-        exit 1
-    fi
-
-
-    export SPECIES
+    export SPECIES="${SPECIES}"
 
     echo "Running RNA-seq subworkflow for \${EXP_ID} (species=\${SPECIES})"
 
