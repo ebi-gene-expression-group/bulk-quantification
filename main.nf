@@ -19,7 +19,7 @@ if (!atlasProd) {
 }
 
 // Check that REFERENCES_PATH is defined in environment
-def referencePath = System.getenv('REFERENCES_PATH')
+def referencePath = System.getenv('BULK_REFERENCES_DIR')
 if (!referencePath) {
     log.error "Environment variable REFERENCES_PATH is not set."
     log.info  "Please set it, e.g.: export REFERENCES_PATH=/path/to/atlas"
@@ -27,7 +27,7 @@ if (!referencePath) {
 }
 
 // Define output directory based on EXP_ID and ATLAS_PROD
-params.outdir = "${atlasProd}/analysis/baseline/rnaseq/experiments/${params.EXP_ID}"
+params.outdir = "${atlasProd}/analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
 
 workflow {
     samplesheet = create_samplesheet(params.EXP_ID)
@@ -44,13 +44,19 @@ process create_samplesheet {
     val EXP_ID
 
     output:
-    path "samplesheet.csv"
+    path "${EXP_ID}_samplesheet.csv"
 
     script:
     """
     echo "Creating samplesheet for ${EXP_ID}"
-    grep "<assay>" ${params.outdir}/${EXP_ID}-configuration.xml | sed 's/\s*<\/*assay>//g' > ${EXP_ID}_ids.csv
-    /bin/create_samplesheet.sh ${EXP_ID}_ids.csv > ${EXP_ID}_samplesheet.csv
+
+    CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
+    IDS_CSV="${EXP_ID}_ids.csv"
+    SAMPLESHEET="${EXP_ID}_samplesheet.csv"
+    
+    grep "<assay>" "\${CONFIG_FILE}" | sed 's/\\s*<\\/*assay>//g' > "\${IDS_CSV}"
+
+    bash "${projectDir}/bin/create_samplesheet.sh" -i "\${IDS_CSV}" -s "\${SAMPLESHEET}"
     """
 }
 
