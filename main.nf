@@ -60,12 +60,9 @@ process create_samplesheet {
     echo "Creating samplesheet for ${EXP_ID}"
 
     CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
-    IDS_CSV="${EXP_ID}_ids.csv"
     SAMPLESHEET="${EXP_ID}_samplesheet.csv"
-    
-    grep "<assay>" "\${CONFIG_FILE}" | sed 's/\\s*<\\/*assay>//g' > "\${IDS_CSV}"
 
-    bash "${projectDir}/bin/create_samplesheet.sh" -i "\${IDS_CSV}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}"
+    bash "${projectDir}/bin/create_samplesheet.sh" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}"
     """
 }
 
