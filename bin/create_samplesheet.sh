@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Create a samplesheet.csv file from an input config.xml or ids.csv
-# The config.xml file is the experiment definition file for experiments, designed for use in Expression Atlas. 
+# Create a samplesheet.csv file from an input <accession>-configuration.xml or ids.csv.
+# The configuration file is the definition file for experiments, designed for use in Expression Atlas. 
 
 usage() { echo """
 Usage: 
@@ -12,6 +12,9 @@ $0 [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>]
 
 while getopts ":i:s:m:" o; do
     case "${o}" in
+        x)
+            x=${OPTARG}
+            ;;
         i)
             i=${OPTARG}
             ;;
