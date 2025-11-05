@@ -46,6 +46,8 @@ workflow {
 
 // -------------------- PROCESSES -------------------- //
 
+// include a process that checks goofys mount, mounts if non-existent
+
 process create_samplesheet {
     publishDir "${params.outdir}/samplesheet", mode: 'copy'
 
