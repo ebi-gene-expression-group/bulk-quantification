@@ -92,7 +92,7 @@ process GET_SPECIES {
   no=\$(printf "%s\\n" "\${species_list-}" | grep -c . || true)
 
   if [ "\$no" -eq 1 ]; then
-    printf "%s\\n" "\$species_list"   # stdout → val species
+    printf "%s" "\$species_list"   # stdout → val species
   else
     >&2 printf "WARN: %s Organism entries for %s\\n" "\$no" "$EXP_ID"
     exit 1
@@ -129,9 +129,9 @@ process run_rnaseq {
     echo "Rendered params:"
     cat "\${EXP_ID}_params.json"
 
-    nextflow run subworkflows/rnaseq/main.nf \\
+    nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "\${EXP_ID}_params.json" \\
-        -C "${projectDir}/conf/rnaseq.config" \\
+        -c "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave
 
