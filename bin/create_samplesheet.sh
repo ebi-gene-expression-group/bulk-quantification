@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # Create a samplesheet.csv file from an input <accession>-configuration.xml or ids.csv.
-# The configuration file is the definition file for experiments, designed for use in Expression Atlas. 
+# The configuration xml file is the definition file for experiments, designed for use in Expression Atlas. 
+# The IDs csv file is a single-column list of ENA run IDs, the same input file required by https://nf-co.re/fetchngs/1.12.0/
 
 usage() { echo """
 Usage: 
