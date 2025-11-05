@@ -10,7 +10,7 @@ or
 $0 [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>]
 """ 1>&2; } 
 
-while getopts ":i:s:m:" o; do
+while getopts ":x:i:s:m:" o; do
     case "${o}" in
         x)
             x=${OPTARG}
