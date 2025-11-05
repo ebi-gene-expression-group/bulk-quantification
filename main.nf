@@ -35,7 +35,7 @@ if (!era_public_mount_path) {
 }
 
 // Define output directory based on EXP_ID and ATLAS_PROD
-params.outdir = "${atlasProd}/analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
+params.outdir = "${atlasProd}/test_analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
 
 workflow {
     samplesheet = create_samplesheet(params.EXP_ID)
