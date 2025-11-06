@@ -36,7 +36,7 @@ shift $((OPTIND-1))
 
 fileIdsType="xml"
 
-if ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ] || [ -z "${c}" ]; then
+if ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ]; then
     usage
     exit 1
 elif [ -n "${x}" ]; then
