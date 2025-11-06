@@ -132,7 +132,8 @@ process run_rnaseq {
         -params-file "\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
-        --without-wave
+        --without-wave\\
+        -with-trace "\${EXP_ID}_trace.tsv"
 
     # Success flag for downstream logic / idempotency
     touch "\${EXP_ID}.rnaseq.done"
