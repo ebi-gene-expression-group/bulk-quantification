@@ -34,11 +34,18 @@ if (!era_public_mount_path) {
     System.exit(1)
 }
 
+def fastq_rawdata_dir = System.getenv('FASTQ_RAWDATA_DIR')
+if (!fastq_rawdata_dir) {
+    log.error "Environment variable FASTQ_RAWDATA_DIR  is not set."
+    log.info  "Please set it, e.g.: export FASTQ_RAWDATA_DIR=/path/to/atlas"
+    System.exit(1)
+}
+
 // Define output directory based on EXP_ID and ATLAS_PROD
 params.outdir = "${atlasProd}/test_analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
 
 workflow {
-    samplesheet = create_samplesheet(params.EXP_ID)
+    samplesheet = get_samples(params.EXP_ID)
     species_ch = GET_SPECIES(params.EXP_ID)
     run_rnaseq(samplesheet, params.EXP_ID, species_ch)
 }
@@ -48,7 +55,9 @@ workflow {
 
 // include a process that checks goofys mount, mounts if non-existent
 
-process create_samplesheet {
+process download
+
+process get_samples {
     publishDir "${params.outdir}/samplesheet", mode: 'copy'
 
     input:
@@ -64,7 +73,7 @@ process create_samplesheet {
     CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
     SAMPLESHEET="${EXP_ID}_samplesheet.csv"
 
-    bash "${projectDir}/bin/create_samplesheet.sh" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}"
+    bash "${projectDir}/bin/get_samples.sh" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}" -c "${fastq_rawdata_dir}"
     """
 }
 
