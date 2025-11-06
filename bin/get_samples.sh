@@ -96,6 +96,17 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     libraryCopyPath="${copyFastqPath}/${librarySubdir}"
     mkdir -p $libraryCopyPath
     cp -R ${mountEraPub}/${librarySubdir}/* ${libraryCopyPath}
-    libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f | paste -sd "," - ) 
-    echo "${libraryFiles},auto" >> $fileSamples
+    libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "*.fastq.gz" -o -name "*.fq.gz" \))
+
+    fileCount=$(echo "${libraryFiles}" | wc -l)
+    
+    if [ "$fileCount" -ne 2 ]; then
+      echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
+      exit 1
+    fi
+    
+    # Join the two file paths into a comma-separated list
+    libraryFiles=$(echo "${libraryFiles}" | paste -sd "," -)
+    
+    echo "${library},${libraryFiles},auto" >> $fileSamples
 done
