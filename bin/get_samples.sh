@@ -95,7 +95,7 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     librarySubdir=$(get_library_subdir "$library")
     libraryCopyPath="${copyFastqPath}/${librarySubdir}"
     mkdir -p $libraryCopyPath
-    cp -R "${mountEraPub}/${librarySubdir}" "${libraryCopyPath}"
+    cp -R ${mountEraPub}/${librarySubdir}/* ${libraryCopyPath}
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f | paste -sd "," - ) 
     echo "${libraryFiles},auto" >> $fileSamples
 done
