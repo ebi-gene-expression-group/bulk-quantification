@@ -94,7 +94,10 @@ echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
 for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     librarySubdir=$(get_library_subdir "$library")
     libraryCopyPath="${copyFastqPath}/${librarySubdir}"
+    mkdir -p $libraryCopyPath
     cp -R "${mountEraPub}/${librarySubdir}" "${libraryCopyPath}"
+``
+May be necessary .. cant test right now because of restriction 
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f | paste -sd "," - ) 
     echo "${libraryFiles},auto" >> $fileSamples
 done
