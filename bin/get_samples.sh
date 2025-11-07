@@ -6,13 +6,16 @@
 
 usage() { echo """
 Usage: 
-$0 [-x <config.xml>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
+$0 [ -a <accession_id> ] [-x <config.xml>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
 or
-$0 [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
+$0 [ -a <accession_id> ] [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
 """ 1>&2; } 
 
-while getopts ":x:i:s:m:c:" o; do
+while getopts ":a:x:i:s:m:c:" o; do
     case "${o}" in
+        a)
+            a=${OPTARG}
+            ;;
         x)
             x=${OPTARG}
             ;;
@@ -36,7 +39,7 @@ shift $((OPTIND-1))
 
 fileIdsType="xml"
 
-if ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ]; then
+if [ -z "${a}" ] || ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ]; then
     usage
     exit 1
 elif [ -n "${x}" ]; then
@@ -45,6 +48,9 @@ else
     fileIds=$i
     fileIdsType="csv"
 fi
+
+# Accession has to be an Atlas/BioStudies experiment accession
+accession=$a
 
 fileSamples=$s
 mountEraPub=$m
