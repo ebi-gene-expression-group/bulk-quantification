@@ -58,7 +58,7 @@ workflow {
 process get_samples {
     publishDir "${params.outdir}/samplesheet", mode: 'copy'
 
-    container 'amazon/aws-cli:/1.29.41'
+    container "$params.aws_container"
 
     input:
     val EXP_ID
