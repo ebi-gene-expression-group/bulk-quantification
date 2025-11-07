@@ -66,6 +66,9 @@ process get_samples {
 
     script:
     """
+    # Replace with container
+    module load awscli/1.29.41
+
     echo "Creating samplesheet for ${EXP_ID}"
 
     CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
