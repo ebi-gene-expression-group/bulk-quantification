@@ -73,7 +73,7 @@ process get_samples {
     CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
     SAMPLESHEET="${EXP_ID}_samplesheet.csv"
 
-    bash "${projectDir}/bin/get_samples.sh" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}" -c "${fastq_rawdata_dir}"
+    bash "${projectDir}/bin/get_samples.sh" -a "${EXP_ID}" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}" -c "${fastq_rawdata_dir}"
     """
 }
 
