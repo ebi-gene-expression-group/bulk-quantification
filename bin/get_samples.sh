@@ -95,7 +95,10 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     librarySubdir=$(get_library_subdir "$library")
     libraryCopyPath="${copyFastqPath}/${librarySubdir}"
     mkdir -p $libraryCopyPath
-    cp -R ${mountEraPub}/${librarySubdir}/* ${libraryCopyPath}
+
+    # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
+    aws --no-sign-request --endpoint "$FIRE_ENDPOINT" s3 cp "${ERA_PUBLIC_S3_PATH}/${librarySubdir}" "${libraryCopyPath}" --recursive
+
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "*.fastq.gz" -o -name "*.fq.gz" \))
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
