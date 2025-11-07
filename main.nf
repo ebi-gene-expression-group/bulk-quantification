@@ -58,6 +58,8 @@ workflow {
 process get_samples {
     publishDir "${params.outdir}/samplesheet", mode: 'copy'
 
+    container 'amazon/aws-cli:/1.29.41'
+
     input:
     val EXP_ID
 
@@ -66,9 +68,6 @@ process get_samples {
 
     script:
     """
-    # Replace with container
-    module load awscli/1.29.41
-
     echo "Creating samplesheet for ${EXP_ID}"
 
     CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
