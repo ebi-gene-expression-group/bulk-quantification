@@ -99,7 +99,7 @@ get_ids_from_input () {
 echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
 for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     librarySubdir=$(get_library_subdir "$library")
-    libraryCopyPath="${copyFastqPath}/${librarySubdir}"
+    libraryCopyPath="${copyFastqPath}/${accession}"
     mkdir -p $libraryCopyPath
 
     # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
