@@ -103,10 +103,10 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
     
-    if [ "$fileCount" -ne 2 ]; then
-      echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
-      exit 1
-    fi
+    # if [ "$fileCount" -ne 2 ]; then
+    #   echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
+    #   exit 1
+    # fi
     
     # Join the two file paths into a comma-separated list
     libraryFiles=$(echo "${libraryFiles}" | paste -sd "," -)
