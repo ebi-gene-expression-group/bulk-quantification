@@ -110,7 +110,7 @@ process GET_SPECIES {
 
 
 process run_rnaseq {
-    publishDir "${params.outdir}/rnaseq", mode: 'copy'
+    publishDir "${params.outdir}/quantification", mode: 'copy'
 
     input:
     path samplesheet
