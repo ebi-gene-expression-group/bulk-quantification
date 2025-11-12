@@ -41,6 +41,20 @@ if (!fastq_rawdata_dir) {
     System.exit(1)
 }
 
+// Consider a process logic that does require defining the variables below
+def endpoint_url = System.getenv('FIRE_ENDPOINT')
+if (!fastq_rawdata_dir) {
+    log.error "Environment variable FIRE_ENDPOINT is not set."
+    log.info  "Please set it, e.g.: export FIRE_ENDPOINT=https://<hostname>/"
+    System.exit(1)
+}
+
+def era_public_s3_path = System.getenv('ERA_PUBLIC_S3_PATH')
+if (!fastq_rawdata_dir) {
+    log.error "Environment variable ERA_PUBLIC_S3_PATH is not set."
+    log.info  "Please set it, e.g.: export ERA_PUBLIC_S3_PATH=s3://path/dir"
+    System.exit(1)
+}
 // Define output directory based on EXP_ID and ATLAS_PROD
 params.outdir = "${atlasProd}/test_analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
 
@@ -78,7 +92,8 @@ process get_samples {
         -a "\${EXP_ID}" \\
         -x "\${CONFIG_FILE}" \\
         -s "\${SAMPLESHEET}" \\
-        -m "${era_public_mount_path}" \\
+        -e "${endpoint_url}" \\
+        -m "${era_public_s3_path}" \\
         -c "${fastq_rawdata_dir}"
     """
 }

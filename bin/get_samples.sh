@@ -6,12 +6,12 @@
 
 usage() { echo """
 Usage: 
-$0 [ -a <accession_id> ] [-x <config.xml>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
+$0 [ -a <accession_id> ] [ -x <config.xml> ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [ -m <era_public_mount_path or era_public_s3_path>] [ -c fastq_copy_path ]
 or
-$0 [ -a <accession_id> ] [-i <ids.csv>] [-s <samplesheet.csv> ] [-m <era_public_mount_path>] [-c fastq_copy_path ]
+$0 [ -a <accession_id> ] [ -i <ids.csv> ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [-m <era_public_mount_path or era_public_s3_path>] [-c fastq_copy_path ]
 """ 1>&2; } 
 
-while getopts ":a:x:i:s:m:c:" o; do
+while getopts ":a:x:i:s:e:m:c:" o; do
     case "${o}" in
         a)
             a=${OPTARG}
@@ -24,6 +24,9 @@ while getopts ":a:x:i:s:m:c:" o; do
             ;;
         s)
             s=${OPTARG}
+            ;;
+        e)
+            e=${OPTARG}
             ;;
         m)
             m=${OPTARG}
@@ -39,7 +42,7 @@ shift $((OPTIND-1))
 
 fileIdsType="xml"
 
-if [ -z "${a}" ] || ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${m}" ]; then
+if [ -z "${a}" ] || ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${e}" ] || [ -z "${m}" ]; then
     usage
     exit 1
 elif [ -n "${x}" ]; then
@@ -53,7 +56,8 @@ fi
 accession=$a
 
 fileSamples=$s
-mountEraPub=$m
+endpointUrl=$e
+eraPubPath=$m
 copyFastqPath=$c
 
 # Function to derive ENA sub-path from the ENA ID
@@ -103,7 +107,7 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     mkdir -p $libraryCopyPath
 
     # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
-    aws --no-sign-request --endpoint-url "$FIRE_ENDPOINT" s3 cp "${ERA_PUBLIC_S3_PATH}/${librarySubdir}" "${libraryCopyPath}" --recursive
+    aws --no-sign-request --endpoint-url "${endpointUrl}" s3 cp "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --recursive
 
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "${library}*.fastq.gz" -o -name "${library}*.fq.gz" \))
 
