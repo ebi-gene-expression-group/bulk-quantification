@@ -103,7 +103,7 @@ for library in $( get_ids_from_input $fileIds $fileIdsType ); do
     mkdir -p $libraryCopyPath
 
     # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
-    aws --no-sign-request --endpoint "$FIRE_ENDPOINT" s3 cp "${ERA_PUBLIC_S3_PATH}/${librarySubdir}" "${libraryCopyPath}" --recursive
+    aws --no-sign-request --endpoint-url "$FIRE_ENDPOINT" s3 cp "${ERA_PUBLIC_S3_PATH}/${librarySubdir}" "${libraryCopyPath}" --recursive
 
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "${library}*.fastq.gz" -o -name "${library}*.fq.gz" \))
 
