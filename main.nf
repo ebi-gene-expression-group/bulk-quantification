@@ -68,12 +68,18 @@ process get_samples {
 
     script:
     """
-    echo "Creating samplesheet for ${EXP_ID}"
+    export EXP_ID=${EXP_ID}
+    export CONFIG_FILE="${params.outdir}/\${EXP_ID}-configuration.xml"
+    export SAMPLESHEET="\${EXP_ID}_samplesheet.csv"
 
-    CONFIG_FILE="${params.outdir}/${EXP_ID}-configuration.xml"
-    SAMPLESHEET="${EXP_ID}_samplesheet.csv"
+    echo "Creating samplesheet for \${EXP_ID}"
 
-    bash "${projectDir}/bin/get_samples.sh" -a "${EXP_ID}" -x "\${CONFIG_FILE}" -s "\${SAMPLESHEET}" -m "${era_public_mount_path}" -c "${fastq_rawdata_dir}"
+    bash "${projectDir}/bin/get_samples.sh" \\
+        -a "\${EXP_ID}" \\
+        -x "\${CONFIG_FILE}" \\
+        -s "\${SAMPLESHEET}" \\
+        -m "${era_public_mount_path}" \\
+        -c "${fastq_rawdata_dir}"
     """
 }
 
