@@ -1,6 +1,6 @@
 {
   "input": "${EXP_ID}_samplesheet.csv",
-  "outdir": "${EXP_ID}/rnaseq_with_params_reference",
+  "outdir": "${NF_CORE_BULK_QUANTIFICATION}/${EXP_ID}/",
   "gtf": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Annotation/Genes/${SPECIES}.R64-1-1.108.gtf",
   "fasta": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/WholeGenomeFasta/${SPECIES}.R64-1-1.dna.toplevel.fa",
   "star_index": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/STARIndex/Ensembl_108/2.7.11b",
