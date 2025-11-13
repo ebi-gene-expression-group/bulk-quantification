@@ -43,4 +43,4 @@ fi
                                       
 export ASSEMBLY=$(grep -i ${SPECIES} ../../bulk-references/genome_reference.conf | awk '{print $7}')
 
-envsubst < "bulk-quantification/params.template.json" > "bulk-quantification/${EXP_ID}_params.json"
+envsubst < "../bulk-quantification/params.template.json" > "../bulk-quantification/${EXP_ID}_params.json"
