@@ -1,11 +1,11 @@
 {
   "input": "${EXP_ID}_samplesheet.csv",
   "outdir": "${NF_CORE_BULK_QUANTIFICATION}/${EXP_ID}/",
-  "gtf": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Annotation/Genes/${SPECIES}.R64-1-1.108.gtf",
-  "fasta": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/WholeGenomeFasta/${SPECIES}.R64-1-1.dna.toplevel.fa",
-  "star_index": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/STARIndex/Ensembl_108/2.7.11b",
-  "salmon_index": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/SalmonIndex/Ensembl_108/1.10.3",
-  "transcript_fasta": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/R64-1-1/Sequence/TranscriptFasta/genome.transcripts.fa",
+  "gtf": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/${ASSEMBLY}/Annotation/Genes/${SPECIES}.${ASSEMBLY}.${RELEASE}.gtf",
+  "fasta": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/${ASSEMBLY}/Sequence/WholeGenomeFasta/${SPECIES}.${ASSEMBLY}.dna.toplevel.fa",
+  "star_index": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/${ASSEMBLY}/Sequence/STARIndex/Ensembl_${RELEASE}/2.7.11b",
+  "salmon_index": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/${ASSEMBLY}/Sequence/SalmonIndex/Ensembl_${RELEASE}/1.10.3",
+  "transcript_fasta": "${BULK_REFERENCES_DIR}/${SPECIES}/Ensembl/${ASSEMBLY}/Sequence/TranscriptFasta/genome.transcripts.fa",
   "star_ignore_sjdbgtf": true,
   "skip_pseudo_alignment": true,
   "without_wave": true
