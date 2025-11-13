@@ -30,7 +30,7 @@ fi
 
 echo $SPECIES
 
-genome=$(grep -i ${SPECIES} ../../bulk-references/genome_reference.conf | awk '{print $3}')
+genome=$(grep -i ${SPECIES} ../bulk-references/genome_reference.conf | awk '{print $3}')
 
 if [[ "$genome" == "ensembl" ]]; then
   export RELEASE="$ENSEMBL_RELEASE"
@@ -41,6 +41,6 @@ else
   exit 1
 fi
                                       
-export ASSEMBLY=$(grep -i ${SPECIES} ../../bulk-references/genome_reference.conf | awk '{print $7}')
+export ASSEMBLY=$(grep -i ${SPECIES} ../bulk-references/genome_reference.conf | awk '{print $7}')
 
-envsubst < "../bulk-quantification/params.template.json" > "../bulk-quantification/${EXP_ID}_params.json"
+envsubst < "../params.template.json" > "../${EXP_ID}_params.json"
