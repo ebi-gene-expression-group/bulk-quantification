@@ -18,6 +18,15 @@ if (!atlasProd) {
     System.exit(1)
 }
 
+def nf_core_bulk_quantification = System.getenv('NF_CORE_BULK_QUANTIFICATION')
+
+if (!nf_core_bulk_quantification) {
+    log.error "Environment variable NF_CORE_BULK_QUANTIFICATION is not set."
+    log.info  "Please set it, e.g.: export NF_CORE_BULK_QUANTIFICATION=/path/to/atlas"
+    System.exit(1)
+}
+
+
 // Check that REFERENCES_PATH is defined in environment
 def referencePath = System.getenv('BULK_REFERENCES_DIR')
 if (!referencePath) {
@@ -56,12 +65,12 @@ if (!fastq_rawdata_dir) {
     System.exit(1)
 }
 // Define output directory based on EXP_ID and ATLAS_PROD
-params.outdir = "${atlasProd}/test_analysis/baseline/rna-seq/experiments/${params.EXP_ID}"
+params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 
 workflow {
     samplesheet = get_samples(params.EXP_ID)
     species_ch = GET_SPECIES(params.EXP_ID)
-    run_rnaseq(samplesheet, params.EXP_ID, species_ch)
+    run_rnaseq(samplesheet, params.EXP_ID)
 }
 
 
@@ -70,8 +79,6 @@ workflow {
 // include a process that checks goofys mount, mounts if non-existent
 
 process get_samples {
-    publishDir "${params.outdir}/samplesheet", mode: 'copy'
-
     container "$params.aws_container"
 
     input:
@@ -131,12 +138,9 @@ process GET_SPECIES {
 
 
 process run_rnaseq {
-    publishDir "${params.outdir}/quantification", mode: 'copy'
-
     input:
     path samplesheet
     val  EXP_ID
-    val SPECIES
 
     output:
     path "${EXP_ID}.rnaseq.done"
@@ -145,21 +149,10 @@ process run_rnaseq {
     """
     set -euo pipefail
 
-    export EXP_ID="${EXP_ID}"
-    export SAMPLESHEET="${samplesheet}"
-    export OUTDIR="${params.outdir}/rnaseq"
-
-    export SPECIES="${SPECIES}"
-
-    echo "Running RNA-seq subworkflow for \${EXP_ID} (species=\${SPECIES})"
-
-    # Render params file from template (must reference \$EXP_ID, \$SAMPLESHEET, \$OUTDIR, \$SPECIES)
-    envsubst < "${projectDir}/params.template.json" > "\${EXP_ID}_params.json"
-    echo "Rendered params:"
-    cat "\${EXP_ID}_params.json"
+    echo "Running RNA-seq subworkflow for \${EXP_ID}"
 
     nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
-        -params-file "\${EXP_ID}_params.json" \\
+        -params-file "${projectDir}/\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave \\
