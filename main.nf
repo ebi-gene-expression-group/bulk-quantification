@@ -89,9 +89,10 @@ process get_samples {
 
     script:
     """
+    configPath=$(ls -d ${atlasProd}/*/rna-seq/experiments/${EXP_ID})
     export EXP_ID=${EXP_ID}
-    export CONFIG_FILE="${atlasProd}/\${EXP_ID}/\${EXP_ID}-configuration.xml"
-    export SAMPLESHEET="\${EXP_ID}_samplesheet.csv"
+    export CONFIG_FILE="${configPath}/${EXP_ID}-configuration.xml"
+    export SAMPLESHEET="${EXP_ID}_samplesheet.csv"
 
     echo "Creating samplesheet for \${EXP_ID}"
 
