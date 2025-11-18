@@ -90,7 +90,7 @@ process get_samples {
     script:
     """
     export EXP_ID=${EXP_ID}
-    export CONFIG_FILE="${atlasProd}/\${EXP_ID}-configuration.xml"
+    export CONFIG_FILE="${atlasProd}/\${EXP_ID}/\${EXP_ID}-configuration.xml"
     export SAMPLESHEET="\${EXP_ID}_samplesheet.csv"
 
     echo "Creating samplesheet for \${EXP_ID}"
