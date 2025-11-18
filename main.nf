@@ -79,7 +79,7 @@ workflow {
 // include a process that checks goofys mount, mounts if non-existent
 
 process get_samples {
-    container "$params.aws_container"
+    //container "$params.aws_container"
 
     input:
     val EXP_ID
