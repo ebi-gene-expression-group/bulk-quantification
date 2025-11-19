@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
 
-# Copcy raw fastq files and create a samplesheet.csv file from an input <accession>-configuration.xml or ids.csv.
-# The configuration xml file is the definition file for experiments, designed for use in Expression Atlas. 
+# Copy raw fastq files and create a samplesheet.csv file.
+# Either provide a file listing run IDs <ids.csv>, or state that input is from atlas.
 # The IDs csv file is a single-column list of ENA run IDs, the same input file required by https://nf-co.re/fetchngs/1.12.0/
 
 usage() { echo """
 Usage: 
-$0 [ -a <accession_id> ] [ -x <config.xml> ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [ -m <era_public_mount_path or era_public_s3_path>] [ -c fastq_copy_path ]
+$0 [ -a <accession_id> ] [ -x atlas ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [ -m <era_public_mount_path or era_public_s3_path>] [ -c fastq_copy_path ]
 or
-$0 [ -a <accession_id> ] [ -i <ids.csv> ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [-m <era_public_mount_path or era_public_s3_path>] [-c fastq_copy_path ]
+$0 [ -a <accession_id> ] [ -x <ids.csv> ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [-m <era_public_mount_path or era_public_s3_path>] [-c fastq_copy_path ]
 """ 1>&2; } 
 
-while getopts ":a:x:i:s:e:m:c:" o; do
+while getopts ":a:x:s:e:m:c:" o; do
     case "${o}" in
         a)
             a=${OPTARG}
             ;;
         x)
             x=${OPTARG}
-            ;;
-        i)
-            i=${OPTARG}
             ;;
         s)
             s=${OPTARG}
@@ -40,21 +37,14 @@ shift $((OPTIND-1))
 
 # Assign and re-assign variables for readability, 
 
-fileIdsType="xml"
-
-if [ -z "${a}" ] || ( [ -z "${x}" ] && [ -z "${i}" ] ) || [ -z "${s}" ] || [ -z "${e}" ] || [ -z "${m}" ]; then
+if [ -z "${a}" ] || [ -z "${x}" ] || [ -z "${s}" ] || [ -z "${e}" ] || [ -z "${m}" ]; then
     usage
     exit 1
-elif [ -n "${x}" ]; then
-    fileIds=$x
-else
-    fileIds=$i
-    fileIdsType="csv"
 fi
 
 # Accession has to be an Atlas/BioStudies experiment accession
 accession=$a
-
+fileIds=$x
 fileSamples=$s
 endpointUrl=$e
 eraPubPath=$m
@@ -89,10 +79,11 @@ get_library_subdir() {
 }
 
 get_ids_from_input () {
-    local fileIds=$1
-    local fileIdsType=$2
-    if [ $fileIdsType == 'xml' ]; then
-        libraries=$( grep "<assay>" "$fileIds" | sed 's/\s*<\/*assay>//g' )
+    local accession=$1
+    local fileIds=$2
+    if [ $fileIds == 'atlas' ]; then
+        fileConfigXml=$(ls -d ${ATLAS_PROD}/analysis/*/rna-seq/experiments/${accession})
+        libraries=$( grep "<assay>" "$fileConfigXml" | sed 's/\s*<\/*assay>//g' )
     else
         libraries=$( cat $fileIds )
     fi
@@ -101,7 +92,7 @@ get_ids_from_input () {
 
 # Main
 echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
-for library in $( get_ids_from_input $fileIds $fileIdsType ); do
+for library in $( get_ids_from_input $accession $fileIds ); do
     librarySubdir=$(get_library_subdir "$library")
     libraryCopyPath="${copyFastqPath}/${accession}"
     mkdir -p $libraryCopyPath
