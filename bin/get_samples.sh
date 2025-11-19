@@ -82,8 +82,8 @@ get_ids_from_input () {
     local accession=$1
     local fileIds=$2
     if [ $fileIds == 'atlas' ]; then
-        fileConfigXml=$(ls -d ${ATLAS_PROD}/analysis/*/rna-seq/experiments/${accession})
-        libraries=$( grep "<assay>" "$fileConfigXml" | sed 's/\s*<\/*assay>//g' )
+        configXmlDir=$(ls -d ${ATLAS_PROD}/analysis/*/rna-seq/experiments/${accession})
+        libraries=$( grep "<assay>" "${configXmlDir}/{accession}-configuration.xml" | sed 's/\s*<\/*assay>//g' )
     else
         libraries=$( cat $fileIds )
     fi
