@@ -89,16 +89,15 @@ process get_samples {
 
     script:
     """
-    configPath=\$(echo ${atlasProd}/*/rna-seq/experiments/${EXP_ID})
     export EXP_ID=${EXP_ID}
-    export CONFIG_FILE="\${configPath}/\${EXP_ID}-configuration.xml"
+    export CONFIG="atlas"
     export SAMPLESHEET="\${EXP_ID}_samplesheet.csv"
 
     echo 'Creating samplesheet for \${EXP_ID}'
 
     bash '${projectDir}/bin/get_samples.sh' \\
         -a "\${EXP_ID}" \\
-        -x "\${CONFIG_FILE}" \\
+        -x "\${CONFIG}" \\
         -s "\${SAMPLESHEET}" \\
         -e "${endpoint_url}" \\
         -m "${era_public_s3_path}" \\
