@@ -18,6 +18,7 @@ BIOSTUDIES_URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
 species_list=$(curl -fsS "$BIOSTUDIES_URL" \
   | tr -d '\r' \
   | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
+  | tr '[:upper:]' '[:lower:]' \
   | sort -u | sed 's/ /_/g' || true)
   
   no=$(printf "%s\n" "${species_list-}" | grep -c . || true)
