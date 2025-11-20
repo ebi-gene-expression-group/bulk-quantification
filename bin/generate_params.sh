@@ -48,4 +48,4 @@ export RELEASE
                                       
 export ASSEMBLY=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
 
-envsubst < "$SCRIPT_DIR/../params.template.json" > "$SCRIPT_DIR/../${EXP_ID}_params.json"
+envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
