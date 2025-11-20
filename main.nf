@@ -124,7 +124,7 @@ process run_rnaseq {
     input:
     path samplesheet
     val  EXP_ID
-    path ${EXP_ID}_params.json
+    path "${EXP_ID}_params.json"
 
     output:
     path "${EXP_ID}.rnaseq.done"
