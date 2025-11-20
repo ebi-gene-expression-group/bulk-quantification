@@ -111,7 +111,7 @@ process GET_SPECIES {
     val EXP_ID
 
   output:
-    ${EXP_ID}_params.json
+    path "${EXP_ID}_params.json"
 
   script:
   """
