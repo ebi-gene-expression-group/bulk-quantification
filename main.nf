@@ -69,8 +69,8 @@ params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 
 workflow {
     samplesheet = get_samples(params.EXP_ID)
-    species_ch = GET_SPECIES(params.EXP_ID)
-    run_rnaseq(samplesheet, params.EXP_ID)
+    params_json_ch = GET_SPECIES(params.EXP_ID)
+    run_rnaseq(samplesheet, params.EXP_ID, params_json_ch)
 }
 
 
@@ -124,6 +124,7 @@ process run_rnaseq {
     input:
     path samplesheet
     val  EXP_ID
+    path ${EXP_ID}_params.json
 
     output:
     path "${EXP_ID}.rnaseq.done"
@@ -135,7 +136,7 @@ process run_rnaseq {
     echo "Running RNA-seq subworkflow for \${EXP_ID}"
 
     nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
-        -params-file "${projectDir}/\${EXP_ID}_params.json" \\
+        -params-file "\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave \\
