@@ -111,28 +111,11 @@ process GET_SPECIES {
     val EXP_ID
 
   output:
-    stdout emit: species
+    ${EXP_ID}_params.json
 
   script:
   """
-  set -euo pipefail
-
-  URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
-
-  # Extract species names
-  species_list=\$(curl -fsS "\$URL" \
-    | tr -d '\\r' \
-    | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
-    | sort -u | sed 's/ /_/g' || true)
-
-  no=\$(printf "%s\\n" "\${species_list-}" | grep -c . || true)
-
-  if [ "\$no" -eq 1 ]; then
-    printf "%s" "\$species_list"   # stdout → val species
-  else
-    >&2 printf "WARN: %s Organism entries for %s\\n" "\$no" "$EXP_ID"
-    exit 1
-  fi
+  ${projectDir}/bin/generate_params.sh ${EXP_ID}
   """
 }
 
