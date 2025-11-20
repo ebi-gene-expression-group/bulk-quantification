@@ -23,7 +23,6 @@ species_list=$(curl -fsS "$BIOSTUDIES_URL" \
   no=$(printf "%s\n" "${species_list-}" | grep -c . || true)
 
 if [ "$no" -eq 1 ]; then
-  printf "%s" "$species_list"   
   export SPECIES=$species_list
   export SPECIES_lower=$(echo $species_list | tr '[:upper:]' '[:lower:]' )
 else
