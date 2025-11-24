@@ -121,6 +121,8 @@ process GET_SPECIES {
 
 
 process run_rnaseq {
+    publishDir params.outdir, mode: 'copy'
+
     input:
     path samplesheet
     val  EXP_ID
