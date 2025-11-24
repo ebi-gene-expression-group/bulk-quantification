@@ -145,6 +145,6 @@ process run_rnaseq {
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
     # Success flag for downstream logic / idempotency
-    touch "${params.outdir}/\${EXP_ID}.rnaseq.done"
+    touch "\${EXP_ID}.rnaseq.done"
     """
 }
