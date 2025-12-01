@@ -91,7 +91,6 @@ get_ids_from_input () {
 }
 
 # Main
-echo "sample,fastq_1,fastq_2,strandedness" > $fileSamples
 for library in $( get_ids_from_input $accession $fileIds ); do
     echo "library id to be downloaded $library"
     librarySubdir=$(get_library_subdir "$library")
@@ -107,10 +106,16 @@ for library in $( get_ids_from_input $accession $fileIds ); do
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
     
-    # if [ "$fileCount" -ne 2 ]; then
-    #   echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
-    #   exit 1
-    # fi
+    if [ ! -s "$fileSamples" ]; then
+        if [ "$fileCount" -eq 1 ]; then
+            echo "sample,fastq_1,strandedness" > "$fileSamples"
+        elif [ "$fileCount" -eq 2 ]; then
+            echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
+        else
+            echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
+            exit 1
+        fi
+    fi
     
     # Join the two file paths into a comma-separated list
     libraryFiles=$(echo "${libraryFiles}" | paste -sd "," -)
