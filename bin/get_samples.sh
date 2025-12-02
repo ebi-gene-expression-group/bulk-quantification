@@ -105,7 +105,7 @@ for library in $( get_ids_from_input $accession $fileIds ); do
     libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "${library}*.fastq.gz" -o -name "${library}*.fq.gz" \))
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
-    
+    echo "fileCount $fileCount"
     if [ ! -s "$fileSamples" ]; then
         if [ "$fileCount" -eq 1 ]; then
             echo "sample,fastq_1,strandedness" > "$fileSamples"
