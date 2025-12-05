@@ -144,7 +144,14 @@ process run_rnaseq {
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
-    # Success flag for downstream logic / idempotency
-    touch "\${EXP_ID}.rnaseq.done"
+    exit_code=\$?
+
+    if [ \$exit_code -eq 0 ]; then
+        # Success flag for downstream logic / idempotency
+        touch "\${EXP_ID}.rnaseq.done"
+    else
+        # Mark failure
+        touch "\${EXP_ID}.rnaseq.fail"
+    fi
     """
 }
