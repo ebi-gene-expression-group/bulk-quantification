@@ -64,7 +64,8 @@ if (!fastq_rawdata_dir) {
     log.info  "Please set it, e.g.: export ERA_PUBLIC_S3_PATH=s3://path/dir"
     System.exit(1)
 }
-// Define output directory based on EXP_ID and ATLAS_PROD
+
+// Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 
 workflow {
@@ -152,6 +153,9 @@ process run_rnaseq {
     else
         # Mark failure
         touch "\${EXP_ID}.rnaseq.fail"
+        # Grab error from log, write to file
+        errOut=\$( echo "Unknown error" ) ### Command here to grab error ################
+        echo \$errOut >> ${params.outdir}/excluded.txt
     fi
     """
 }
