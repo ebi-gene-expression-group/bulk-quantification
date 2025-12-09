@@ -155,7 +155,7 @@ process run_rnaseq {
         touch "\${EXP_ID}.rnaseq.fail"
         # Grab error from log, write to file
         errOut=\$( echo "Unknown error" ) ### Command here to grab error ################
-        echo \$errOut >> ${params.outdir}/excluded.txt
+        echo \$errOut >> ${nf_core_bulk_quantification}/excluded.txt
     fi
     """
 }
