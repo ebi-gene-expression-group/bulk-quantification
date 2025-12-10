@@ -69,9 +69,22 @@ if (!fastq_rawdata_dir) {
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 
 workflow {
-    samplesheet = get_samples(params.EXP_ID)
+    samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = GET_SPECIES(params.EXP_ID)
-    run_rnaseq(samplesheet, params.EXP_ID, params_json_ch)
+    RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+
+    cleanup {
+        if (workflow.success) {
+            // Handles success
+            log.info "Pipeline completed successfully."
+            HANDLE_STATUS('SUCCESS')
+            
+        } else {
+            // Pass the failed status to the status handler process
+            log.info "Pipeline failed."            
+            HANDLE_STATUS('FAILED')
+        }
+    }
 }
 
 
@@ -79,8 +92,9 @@ workflow {
 
 // include a process that checks goofys mount, mounts if non-existent
 
-process get_samples {
+process GET_SAMPLES {
     //container "$params.aws_container"
+    errorStrategy 'terminate'
 
     input:
     val EXP_ID
@@ -107,21 +121,26 @@ process get_samples {
 }
 
 
+// Get species information
 process GET_SPECIES {
-  input:
-    val EXP_ID
+    errorStrategy 'terminate'
 
-  output:
-    path "${EXP_ID}_params.json"
+    input:
+        val EXP_ID
 
-  script:
-  """
-  ${projectDir}/bin/generate_params.sh ${EXP_ID}
-  """
+    output:
+        path "${EXP_ID}_params.json"
+
+    script:
+    """
+    ${projectDir}/bin/generate_params.sh ${EXP_ID}
+    """
 }
 
+// Run the nf-core/rnasesq workflow
+process RUN_RNASEQ {
+    errorStrategy 'terminate'
 
-process run_rnaseq {
     publishDir params.outdir, mode: 'copy'
 
     input:
@@ -144,18 +163,33 @@ process run_rnaseq {
         -profile singularity \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
+    """
+}
 
-    exit_code=\$?
+// For cleanup
+process HANDLE_STATUS {
 
-    if [ \$exit_code -eq 0 ]; then
+    publishDir params.outdir, mode: 'copy'
+    
+    input:
+    val pipeline_status
+    
+    script:
+    """
+    echo "Cleaning up for: ${params.EXP_ID} "
+
+    if [ ${pipeline_status} == SUCCESS ]
         # Success flag for downstream logic / idempotency
-        touch "\${EXP_ID}.rnaseq.done"
+        echo "Creating ${params.EXP_ID}.rnaseq.done"
+        touch "${params.EXP_ID}.rnaseq.done"
     else
         # Mark failure
-        touch "\${EXP_ID}.rnaseq.fail"
+        echo "Creating ${params.EXP_ID}.rnaseq.fail"
+        touch "${params.EXP_ID}.rnaseq.fail"
         # Grab error from log, write to file
         errOut=\$( echo "Unknown error" ) ### Command here to grab error ################
         echo \$errOut >> ${nf_core_bulk_quantification}/excluded.txt
     fi
+
     """
 }
