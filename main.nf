@@ -94,7 +94,6 @@ workflow {
 
 process GET_SAMPLES {
     //container "$params.aws_container"
-    errorStrategy 'terminate'
 
     input:
     val EXP_ID
@@ -123,7 +122,6 @@ process GET_SAMPLES {
 
 // Get species information
 process GET_SPECIES {
-    errorStrategy 'terminate'
 
     input:
         val EXP_ID
@@ -139,7 +137,6 @@ process GET_SPECIES {
 
 // Run the nf-core/rnasesq workflow
 process RUN_RNASEQ {
-    errorStrategy 'terminate'
 
     publishDir params.outdir, mode: 'copy'
 
@@ -176,9 +173,9 @@ process HANDLE_STATUS {
     
     script:
     """
-    echo "Cleaning up for: ${params.EXP_ID} "
+    echo "Cleaning up for: ${params.EXP_ID}"
 
-    if [ ${pipeline_status} == SUCCESS ]
+    if [ "${pipeline_status}" == SUCCESS ]
         # Success flag for downstream logic / idempotency
         echo "Creating ${params.EXP_ID}.rnaseq.done"
         touch "${params.EXP_ID}.rnaseq.done"
