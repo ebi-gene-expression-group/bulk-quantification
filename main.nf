@@ -68,25 +68,6 @@ if (!fastq_rawdata_dir) {
 // Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 
-workflow {
-    samplesheet = GET_SAMPLES(params.EXP_ID)
-    params_json_ch = GET_SPECIES(params.EXP_ID)
-    RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
-
-    cleanup {
-        if (workflow.success) {
-            // Handles success
-            log.info "Pipeline completed successfully."
-            HANDLE_STATUS('SUCCESS')
-            
-        } else {
-            // Pass the failed status to the status handler process
-            log.info "Pipeline failed."            
-            HANDLE_STATUS('FAILED')
-        }
-    }
-}
-
 
 // -------------------- PROCESSES -------------------- //
 
@@ -175,7 +156,7 @@ process HANDLE_STATUS {
     """
     echo "Cleaning up for: ${params.EXP_ID}"
 
-    if [ "${pipeline_status}" == SUCCESS ]
+    if [ "${pipeline_status}" == "SUCCESS" ]
         # Success flag for downstream logic / idempotency
         echo "Creating ${params.EXP_ID}.rnaseq.done"
         touch "${params.EXP_ID}.rnaseq.done"
@@ -189,4 +170,23 @@ process HANDLE_STATUS {
     fi
 
     """
+}
+
+
+workflow {
+    main:
+    samplesheet = GET_SAMPLES(params.EXP_ID)
+    params_json_ch = GET_SPECIES(params.EXP_ID)
+    RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+
+    onComplete:
+    if (workflow.success) {
+        // Handle success
+        log.info "Pipeline completed successfully."
+        HANDLE_STATUS('SUCCESS')
+    } else {
+        // Pass the failed status to the status handler process
+        log.info "Pipeline failed."            
+        HANDLE_STATUS('FAILED')
+    }
 }
