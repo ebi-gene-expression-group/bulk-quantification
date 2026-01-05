@@ -183,10 +183,11 @@ workflow {
     if (workflow.success) {
         // Handle success
         log.info "Pipeline completed successfully."
-        HANDLE_STATUS('SUCCESS')
-    } else {
-        // Pass the failed status to the status handler process
+        touch "${params.outdir}/${params.EXP_ID}.rnaseq.done"
+    } 
+    else {
+        // 
         log.info "Pipeline failed."            
-        HANDLE_STATUS('FAILED')
+        touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
     }
 }
