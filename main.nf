@@ -67,6 +67,9 @@ if (!fastq_rawdata_dir) {
 
 // Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
+def results_dir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
+results_dir.mkdirs()
+
 
 
 // -------------------- PROCESSES -------------------- //
@@ -189,12 +192,12 @@ workflow.onComplete {
 
     if (workflow.success) {
         log.info "Pipeline completed successfully!"        
-        def doneFile = file("${params.EXP_ID}.rnaseq.done")
+        def doneFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.done") // have this file correctly saved in params.outdir
         doneFile.text = ""
 
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
-        def failureFile = file("${params.EXP_ID}.rnaseq.failed")
+        def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
         failureFile.text = ""
     }
 }
