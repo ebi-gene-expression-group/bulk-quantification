@@ -179,13 +179,20 @@ workflow {
     RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
 }
 
-workflow.onError {
-    log.info "Pipeline failed."            
-    //touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
-}
+// workflow.onError {
+//     log.info "Pipeline failed."            
+//     //touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
+// }
 
 workflow.onComplete {
-    log.info "Pipeline completed at $workflow.complete."
-    log.info "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
-    //touch "${params.outdir}/${params.EXP_ID}.rnaseq.done"
+    if (workflow.success) {
+        log.info "Pipeline completed successfully at $workflow.complete."
+        def doneFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.done")
+        doneFile.text = ""
+
+    } else {
+        log.error "Pipeline failed with exit status: ${workflow.exitStatus}"
+        def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
+        failureFile.text = ""
+    }
 }
