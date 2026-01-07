@@ -174,17 +174,18 @@ process HANDLE_STATUS {
 
 
 workflow {
-    main:
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = GET_SPECIES(params.EXP_ID)
     RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+}
 
-    onError:
-        log.info "Pipeline failed."            
-        touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
+workflow.onError {
+    log.info "Pipeline failed."            
+    //touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
+}
 
-    onComplete:
-        log.info "Pipeline completed at $workflow.complete."
-        log.info "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
-        //touch "${params.outdir}/${params.EXP_ID}.rnaseq.done"
+workflow.onComplete {
+    log.info "Pipeline completed at $workflow.complete."
+    log.info "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
+    //touch "${params.outdir}/${params.EXP_ID}.rnaseq.done"
 }
