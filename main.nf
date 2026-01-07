@@ -185,14 +185,16 @@ workflow {
 // }
 
 workflow.onComplete {
+    log.info "Pipeline completed at $workflow.complete."
+
     if (workflow.success) {
-        log.info "Pipeline completed successfully at $workflow.complete."
-        def doneFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.done")
+        log.info "Pipeline completed successfully!"        
+        def doneFile = file("${params.EXP_ID}.rnaseq.done")
         doneFile.text = ""
 
     } else {
-        log.error "Pipeline failed with exit status: ${workflow.exitStatus}"
-        def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
+        log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
+        def failureFile = file("${params.EXP_ID}.rnaseq.failed")
         failureFile.text = ""
     }
 }
