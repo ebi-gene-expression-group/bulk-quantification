@@ -67,7 +67,7 @@ if (!fastq_rawdata_dir) {
 
 // Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
-def results_dir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
+def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
 
 
