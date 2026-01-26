@@ -182,11 +182,6 @@ workflow {
     RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
 }
 
-// workflow.onError {
-//     log.info "Pipeline failed."            
-//     //touch "${params.outdir}/${params.EXP_ID}.rnaseq.failed"
-// }
-
 workflow.onComplete {
     log.info "Pipeline completed at $workflow.complete."
 
@@ -201,16 +196,11 @@ workflow.onComplete {
         def err_msg = workflow.errorMessage
         def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
         failureFile.text = "${err_msg} \n\n ${err_report}"
+
+        // Write to excluded.txt
+        def excluded = file("${params.nf_core_bulk_quantification}/excluded.txt")   
+        excluded.parentFile.mkdirs()
+        excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
 
-workflow.onError {
-
-    log.error "Pipeline failed"
-
-    def proc = workflow.errorReport?.process ?: "unknown"
-    def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed1")
-
-    failureFile.text = "FAILED_PROCESS=${proc}\nEXIT_CODE=${workflow.exitStatus}\n"
-    log.error "FAILED_PROCESS=${proc}\nEXIT_CODE=${workflow.exitStatus}\n"
-}
