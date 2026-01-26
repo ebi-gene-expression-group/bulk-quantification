@@ -198,7 +198,7 @@ workflow.onComplete {
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
         def proc = workflow.errorReport?.process ?: "unknown"
-
+        log.info "FAILED_PROCESS=${proc}\nEXIT_CODE=${workflow.exitStatus}\n"
         def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
         failureFile.text = "FAILED_PROCESS=${proc}\nEXIT_CODE=${workflow.exitStatus}\n"
     }
