@@ -197,9 +197,17 @@ workflow.onComplete {
 
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
+        log.info "errorReport starts"
+        log.info "------------------"
         log.info workflow.errorReport?.toString()
+        log.info "------------------"
+        log.info "================="
+        log.info "errorReport ends"
+        log.info "errorMessage starts"
+        log.info "------------------"
         log.info workflow.errorMessage
-
+        log.info "------------------"
+        log.info "errorMessage ends"
         def proc = workflow.errorReport?.process ?: "unknown"
         log.info "FAILED_PROCESS"
         log.info "${proc}"
