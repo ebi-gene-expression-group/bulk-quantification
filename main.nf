@@ -198,8 +198,7 @@ workflow.onComplete {
         failureFile.text = "${err_msg} \n\n ${err_report}"
 
         // Write to excluded.txt
-        def excluded = file("${params.nf_core_bulk_quantification}/excluded.txt")   
-        excluded.parentFile.mkdirs()
+        def excluded = file("${nf_core_bulk_quantification}/excluded.txt")   
         excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
