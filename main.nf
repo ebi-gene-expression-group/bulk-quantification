@@ -198,7 +198,7 @@ workflow.onComplete {
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
         def err_report = workflow.errorReport?.toString()
-        def err_msg workflow.errorMessage
+        def err_msg = workflow.errorMessage
         def failureFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.failed")
         failureFile.text = "${err_msg} \n\n ${err_report}"
     }
