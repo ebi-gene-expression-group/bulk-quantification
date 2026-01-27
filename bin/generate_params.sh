@@ -12,26 +12,50 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export EXP_ID=$1
 
-BIOSTUDIES_URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${EXP_ID}"
-                        
-# Extract species names
-species_list=$(curl -fsS "$BIOSTUDIES_URL" \
-  | tr -d '\r' \
-  | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
-  | sort -u | sed 's/ /_/g' || true)
-  
-  no=$(printf "%s\n" "${species_list-}" | grep -c . || true)
+# Function to fetch species names from BioStudies API
+fetch_species_names() {
+  local exp_id="$1"
+  local BIOSTUDIES_URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${exp_id}"
+  local species_list no
 
-if [ "$no" -eq 1 ]; then
-  export SPECIES=$species_list
-  export SPECIES_lower=$(echo $species_list | tr '[:upper:]' '[:lower:]' )
-else
-  >&2 printf "WARN: %s Organism entries for %s\n" "$no" "${EXP_ID}"
-  exit 1
-fi
+  if [[ "$exp_id" == *GEOD* ]]; then
+    species_list="$(
+      awk -F'\t' '
+        NR==1 {
+          for (i=1; i<=NF; i++) if ($i=="Characteristics [organism]") col=i
+          if (!col) { print "ERROR: column Characteristics [organism] not found" > "/dev/stderr"; exit 1 }
+          next
+        }
+        { sub(/\r$/, "", $col); print $col }
+      ' "$ATLAS_PROD/GEO_import/GEOD/${exp_id}/${exp_id}-sdrf.txt" \
+      | sort -u \
+      | sed 's/ /_/g'
+    )"
+  else
+    species_list=$(curl -fsS "$BIOSTUDIES_URL" \
+      | tr -d '\r' \
+      | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
+      | sort -u | sed 's/ /_/g' || true)
+    
+  fi
 
-echo $SPECIES
+  no="$(printf '%s\n' "${species_list}" | grep -c . || true)"
 
+  if [[ "$no" -eq 1 ]]; then
+    local SP="$species_list"
+    local SPECIES_lower
+    SPECIES_lower="$(tr '[:upper:]' '[:lower:]' <<<"$species_list")"
+
+    # If you actually need these outside the function, echo/export them.
+    echo "$SP"
+  else
+    >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$exp_id"
+    return 1
+  fi
+}
+
+
+SPECIES=fetch_species_names(${EXP_ID})
 genome=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
