@@ -55,7 +55,7 @@ fetch_species_names() {
 }
 
 
-SPECIES=fetch_species_names "${EXP_ID}"
+export SPECIES=$(fetch_species_names "${EXP_ID}")
 genome=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
