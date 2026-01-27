@@ -144,6 +144,10 @@ process RUN_RNASEQ {
         -profile singularity \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
+
+    # Create done file only if workflow succeeded
+    touch "${EXP_ID}.rnaseq.done"
+    
     """
 }
 
@@ -186,10 +190,7 @@ workflow.onComplete {
     log.info "Pipeline completed at $workflow.complete."
 
     if (workflow.success) {
-        log.info "Pipeline completed successfully!"        
-        def doneFile = file("${params.outdir}/${params.EXP_ID}.rnaseq.done") // have this file correctly saved in params.outdir
-        doneFile.text = ""
-
+        log.info "Pipeline completed successfully!"
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
         def err_report = workflow.errorReport?.toString()
