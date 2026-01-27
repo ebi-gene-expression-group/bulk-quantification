@@ -18,7 +18,7 @@ fetch_species_names() {
   local BIOSTUDIES_URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${exp_id}"
   local species_list no
 
-  if [[ "$exp_id" == *GEOD* ]]; then
+  if [[ "$exp_id" == *GEOD* || "$exp_id" == *CURD* ]]; then
     species_list="$(
       awk -F'\t' '
         NR==1 {
