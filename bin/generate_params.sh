@@ -43,10 +43,6 @@ fetch_species_names() {
 
   if [[ "$no" -eq 1 ]]; then
     local SP="$species_list"
-    local SPECIES_lower
-    SPECIES_lower="$(tr '[:upper:]' '[:lower:]' <<<"$species_list")"
-
-    # If you actually need these outside the function, echo/export them.
     echo "$SP"
   else
     >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$exp_id"
@@ -56,6 +52,8 @@ fetch_species_names() {
 
 
 export SPECIES=$(fetch_species_names "${EXP_ID}")
+export SPECIES_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
+
 genome=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
