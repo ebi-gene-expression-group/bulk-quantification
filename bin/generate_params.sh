@@ -17,8 +17,9 @@ fetch_species_names() {
   local exp_id="$1"
   local BIOSTUDIES_URL="https://www.ebi.ac.uk/biostudies/api/v1/studies/${exp_id}"
   local species_list no
+  local exp_type=$(echo "${exp_id#E-}" | sed 's/-.*//')
 
-  if [[ "$exp_id" == *GEOD* || "$exp_id" == *CURD* ]]; then
+  if [[ "$exp_type" == "GEOD" || "$exp_type" == "CURD" ]]; then
     species_list="$(
       awk -F'\t' '
         NR==1 {
@@ -27,7 +28,7 @@ fetch_species_names() {
           next
         }
         { sub(/\r$/, "", $col); print $col }
-      ' "$ATLAS_PROD/GEO_import/GEOD/${exp_id}/${exp_id}-sdrf.txt" \
+      ' "$ATLAS_PROD/GEO_import/${exp_type}/${exp_id}/${exp_id}-sdrf.txt" \
       | sort -u \
       | sed 's/ /_/g'
     )"
