@@ -23,7 +23,7 @@ fetch_species_names() {
     species_list="$(
       awk -F'\t' '
         NR==1 {
-          for (i=1; i<=NF; i++) if ($i=="Characteristics [organism]") col=i
+          for (i=1; i<=NF; i++) if ($i == "Characteristics [organism]" || $i == "Characteristics[organism]") col=i
           if (!col) { print "ERROR: column Characteristics [organism] not found" > "/dev/stderr"; exit 1 }
           next
         }
