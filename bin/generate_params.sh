@@ -28,7 +28,7 @@ fetch_species_names() {
           next
         }
         { sub(/\r$/, "", $col); print $col }
-      ' "$AE2_PRODUCTION/GEO_import/${exp_type}/${exp_id}/${exp_id}-sdrf.txt" \
+      ' "$AE2_PRODUCTION/${exp_type}/${exp_id}/${exp_id}-sdrf.txt" \
       | sort -u \
       | sed 's/ /_/g'
     )"
