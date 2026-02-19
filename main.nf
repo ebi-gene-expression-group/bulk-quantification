@@ -142,7 +142,7 @@ process RUN_RNASEQ {
         -params-file "\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
         -c "${projectDir}/conf/star_species.config" \\
-        -profile singularity \\
+        -profile singularity,extreme \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
