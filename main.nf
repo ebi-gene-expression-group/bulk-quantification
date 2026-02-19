@@ -141,6 +141,7 @@ process RUN_RNASEQ {
     nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
+        -c "${projectDir}/conf/star_species.config" \\
         -profile singularity \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
