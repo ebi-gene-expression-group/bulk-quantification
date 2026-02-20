@@ -19,7 +19,6 @@ fetch_species_names() {
   local species_list no
   local exp_type=$(echo "${exp_id#E-}" | sed 's/-.*//')
 
-  if [[ "$exp_type" == "GEOD" || "$exp_type" == "CURD" ]]; then
     species_list="$(
       awk -F'\t' '
         NR==1 {
@@ -32,13 +31,7 @@ fetch_species_names() {
       | sort -u \
       | sed 's/ /_/g'
     )"
-  else
-    species_list=$(curl -fsS "$BIOSTUDIES_URL" \
-      | tr -d '\r' \
-      | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
-      | sort -u | sed 's/ /_/g' || true)
-    
-  fi
+  
 
   no="$(printf '%s\n' "${species_list}" | grep -c . || true)"
 
