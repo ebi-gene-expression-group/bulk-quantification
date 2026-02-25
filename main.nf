@@ -143,6 +143,7 @@ process RUN_RNASEQ {
         -c "${projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
         --without-wave \\
+        --bam_csi_index \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
     # Create done file only if workflow succeeded
