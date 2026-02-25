@@ -143,6 +143,7 @@ process RUN_RNASEQ {
         -c "${projectDir}/conf/rnaseq.config" \\
         -c "${projectDir}/conf/star_species.config" \\
         -profile singularity,extreme \\
+        --bam_csi_index \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
