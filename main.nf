@@ -127,7 +127,7 @@ process RUN_RNASEQ {
     input:
     path samplesheet
     val  EXP_ID
-    path "${EXP_ID}_params.json"
+    path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
     path "${EXP_ID}.rnaseq.done"
@@ -136,21 +136,21 @@ process RUN_RNASEQ {
     """
     set -euo pipefail
 
-    echo "Running RNA-seq subworkflow for \${EXP_ID}"
+    echo "Running RNA-seq subworkflow for ${EXP_ID}"
 
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
-        FASTA_PATH=$(jq -r '.fasta // .genome // empty' "${EXP_ID}_params.json")
+        FASTA_PATH=\$(jq -r '.fasta // .genome // empty' "${params_json}")
     else
-        FASTA_PATH=$(grep -oP '"fasta"\s*:\s*"\K[^"]+' "${EXP_ID}_params.json" || \
-                     grep -oP '"genome"\s*:\s*"\K[^"]+' "${EXP_ID}_params.json")
+        FASTA_PATH=\$(grep -oP '"fasta"\\s*:\\s*"\\K[^"]+' "${params_json}" || \
+                     grep -oP '"genome"\\s*:\\s*"\\K[^"]+' "${params_json}")
     fi
     
-    GENOME_FASTA_INDEX="${FASTA_PATH}.fai"
+    GENOME_FASTA_INDEX="\${FASTA_PATH}.fai"
     
     # Check if CSI is needed
-    if [ -f "$GENOME_FASTA_INDEX" ]; then
-        if awk '$2 > 512000000 {exit 1}' "$GENOME_FASTA_INDEX"; then
+    if [ -f "\$GENOME_FASTA_INDEX" ]; then
+        if awk '\$2 > 512000000 {exit 1}' "\$GENOME_FASTA_INDEX"; then
             BAM_INDEX=""
             echo "BAI index (chromosomes <512 Mbp)"
         else
@@ -159,14 +159,14 @@ process RUN_RNASEQ {
         fi
     else
         BAM_INDEX=""
-        echo "FASTA index not found: $GENOME_FASTA_INDEX (defaulting to BAI)"
+        echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
     fi
 
-    nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
-        -params-file "\${EXP_ID}_params.json" \\
-        -c "${projectDir}/conf/rnaseq.config" \\
+    nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
+        -params-file "${params_json}" \\
+        -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -profile singularity \\
-        $BAM_INDEX \\
+        \$BAM_INDEX \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
@@ -228,4 +228,3 @@ workflow.onComplete {
         excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
-
