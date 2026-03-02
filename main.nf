@@ -140,10 +140,10 @@ process RUN_RNASEQ {
 
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
-        FASTA_PATH=\$(jq -r '.fasta // .genome // empty' "${EXP_ID}_params.json")
+        FASTA_PATH=\$(jq -r '.fasta // .genome // empty' "\${EXP_ID}_params.json")
     else
-        FASTA_PATH=\$(grep -oP '"fasta"\s*:\s*"\K[^"]+' "${EXP_ID}_params.json" || \
-                     grep -oP '"genome"\s*:\s*"\K[^"]+' "${EXP_ID}_params.json")
+        FASTA_PATH=\$(grep -oP '"fasta"\s*:\s*"\K[^"]+' "\${EXP_ID}_params.json" || \
+                     grep -oP '"genome"\s*:\s*"\K[^"]+' "\${EXP_ID}_params.json")
     fi
     
     GENOME_FASTA_INDEX="\${FASTA_PATH}.fai"
