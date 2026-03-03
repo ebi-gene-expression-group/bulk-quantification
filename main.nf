@@ -175,6 +175,10 @@ process RUN_RNASEQ {
         --skip_preseq \\
         --skip_biotype_qc \\
         --skip_kraken2 \\
+        --skip_stringtie \\
+        --skip_deseq2_qc \\
+        --skip_markduplicates \\
+        --skip_bigwig \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
 
     # Create done file only if workflow succeeded
