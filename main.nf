@@ -168,7 +168,19 @@ process RUN_RNASEQ {
         -profile singularity \\
         \$BAM_INDEX \\
         --without-wave \\
-        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
+        --skip_fastqc  \\
+        --skip_rseqc  \\
+        --skip_qualimap \\
+        --skip_dupradar \\
+        --skip_preseq \\
+        --skip_biotype_qc \\
+        --skip_kraken2 \\
+        --skip_stringtie \\
+        --skip_deseq2_qc \\
+        --skip_markduplicates \\
+        --skip_bigwig \\
+        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
+    && nextflow clean -f
 
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
