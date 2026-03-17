@@ -179,7 +179,8 @@ process RUN_RNASEQ {
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
-        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
+        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
+    && nextflow clean -f
 
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
