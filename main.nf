@@ -138,11 +138,16 @@ process RUN_RNASEQ {
 
     echo "Running RNA-seq subworkflow for \${EXP_ID}"
 
+    PROFILE="singularity"
+
+    # Add custom profile here
+    PROFILE=${PROFILE}",extreme"
+
     nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "\${EXP_ID}_params.json" \\
         -c "${projectDir}/conf/rnaseq.config" \\
         -c "${projectDir}/conf/star_species.config" \\
-        -profile singularity,extreme \\
+        -profile ${PROFILE} \\
         --bam_csi_index \\
         --without-wave \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
