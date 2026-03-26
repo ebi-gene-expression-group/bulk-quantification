@@ -141,7 +141,7 @@ process RUN_RNASEQ {
     PROFILE="singularity"
 
     # Add custom profile here
-    PROFILE=${PROFILE}",extreme"
+    PROFILE=${PROFILE}",yeast"
 
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
