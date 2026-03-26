@@ -138,10 +138,10 @@ process RUN_RNASEQ {
 
     echo "Running RNA-seq subworkflow for ${EXP_ID}"
 
-    PROFILE="singularity"
+    #PROFILE="singularity"
 
     # Add custom profile here
-    PROFILE=${PROFILE}",yeast"
+    #PROFILE=${PROFILE}",yeast"
 
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
@@ -170,7 +170,7 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\       
-        -profile ${PROFILE} \\
+        -profile singularity,yeast \\
         \$BAM_INDEX \\
         --without-wave \\
         --skip_fastqc  \\
