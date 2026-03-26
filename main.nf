@@ -166,7 +166,7 @@ process RUN_RNASEQ {
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -c "${workflow.projectDir}/conf/star_yeast.config" \\
-        -profile singularity,yeast \\
+        -profile singularity \\
         \$BAM_INDEX \\
         --without-wave \\
         --skip_fastqc  \\
