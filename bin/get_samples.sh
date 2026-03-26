@@ -102,7 +102,16 @@ for library in $( get_ids_from_input $accession $fileIds ); do
     # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
     aws --no-sign-request --endpoint-url "${endpointUrl}" s3 cp "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --recursive
 
-    libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \( -name "${library}*.fastq.gz" -o -name "${library}*.fq.gz" \))
+    # First look for paired-end files
+    pairedFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
+      -name "${library}_[12].f*q.gz")
+    
+    if [[ -n "$pairedFiles" ]]; then
+      libraryFiles="$pairedFiles"
+    else
+      libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
+        -name "${library}.f*q.gz")
+    fi
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
     echo "fileCount $fileCount"

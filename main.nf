@@ -127,7 +127,7 @@ process RUN_RNASEQ {
     input:
     path samplesheet
     val  EXP_ID
-    path "${EXP_ID}_params.json"
+    path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
     path "${EXP_ID}.rnaseq.done"
@@ -136,21 +136,56 @@ process RUN_RNASEQ {
     """
     set -euo pipefail
 
-    echo "Running RNA-seq subworkflow for \${EXP_ID}"
+    echo "Running RNA-seq subworkflow for ${EXP_ID}"
 
     PROFILE="singularity"
 
     # Add custom profile here
     PROFILE=${PROFILE}",extreme"
 
-    nextflow run ${projectDir}/subworkflows/rnaseq/main.nf \\
-        -params-file "\${EXP_ID}_params.json" \\
-        -c "${projectDir}/conf/rnaseq.config" \\
-        -c "${projectDir}/conf/star_species.config" \\
+    # Extract FASTA path from JSON
+    if command -v jq &> /dev/null; then
+        FASTA_PATH=\$(jq -r '.fasta // .genome // empty' "${params_json}")
+    else
+        FASTA_PATH=\$(grep -oP '"fasta"\\s*:\\s*"\\K[^"]+' "${params_json}" || \
+                     grep -oP '"genome"\\s*:\\s*"\\K[^"]+' "${params_json}")
+    fi
+    
+    GENOME_FASTA_INDEX="\${FASTA_PATH}.fai"
+    
+    # Check if CSI is needed
+    if [ -f "\$GENOME_FASTA_INDEX" ]; then
+        if awk '\$2 > 512000000 {exit 1}' "\$GENOME_FASTA_INDEX"; then
+            BAM_INDEX=""
+            echo "BAI index (chromosomes <512 Mbp)"
+        else
+            BAM_INDEX="--bam_csi_index"
+            echo "CSI index (chromosomes >512 Mbp detected)"
+        fi
+    else
+        BAM_INDEX=""
+        echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
+    fi
+
+    nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
+        -params-file "${params_json}" \\
+        -c "${workflow.projectDir}/conf/rnaseq.config" \\       
         -profile ${PROFILE} \\
-        --bam_csi_index \\
+        \$BAM_INDEX \\
         --without-wave \\
-        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv"
+        --skip_fastqc  \\
+        --skip_rseqc  \\
+        --skip_qualimap \\
+        --skip_dupradar \\
+        --skip_preseq \\
+        --skip_biotype_qc \\
+        --skip_kraken2 \\
+        --skip_stringtie \\
+        --skip_deseq2_qc \\
+        --skip_markduplicates \\
+        --skip_bigwig \\
+        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
+    && nextflow clean -f
 
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
