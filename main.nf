@@ -138,11 +138,6 @@ process RUN_RNASEQ {
 
     echo "Running RNA-seq subworkflow for ${EXP_ID}"
 
-    #PROFILE="singularity"
-
-    # Add custom profile here
-    #PROFILE=${PROFILE}",yeast"
-
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
         FASTA_PATH=\$(jq -r '.fasta // .genome // empty' "${params_json}")
