@@ -1,0 +1,38 @@
+# Hide sensitive information
+show_analysis_paths: false
+show_analysis_time: false
+
+# Custom branding (optional)
+title: "RNA-seq Quality Control Report"
+subtitle: "Expression Atlas RNA-seq Analysis Results"
+intro_text: "This report summarizes the quality control metrics for RNA-seq analysis."
+
+# Custom logo (optional)
+custom_logo: "https://www.ebi.ac.uk/gxa/resources/images/expression-atlas.png"
+custom_logo_url: "https://elixir-europe.org/sites/default/files/ebi_official_logo.png"
+custom_logo_title: "Expression Atlas"
+
+# Clean up sample names to remove sensitive paths
+fn_clean_sample_names: true
+extra_fn_clean_exts:
+  - ".fastq.gz"
+  - ".fq.gz"
+  - "_R1"
+  - "_R2"
+  - "_001"
+
+# Remove any modules you don't want to show (optional)
+exclude_modules:
+  - "custom_content"  # if it contains sensitive info
+
+# Hide specific columns that might contain sensitive info
+table_columns_visible:
+  general_stats_table:
+    # Hide any columns that might show file paths or sensitive data
+    # Adjust based on your specific needs
+
+# Sample name replacement to anonymize if needed
+sample_names_replace:
+  # Example: replace internal IDs with generic names
+  # "internal_id_123": "Sample_1"
+  # "internal_id_456": "Sample_2"
