@@ -2,14 +2,14 @@
 show_analysis_paths: false
 show_analysis_time: false
 
-# Custom branding (optional)
+# Custom branding
 title: "RNA-seq Quality Control Report"
 subtitle: "Expression Atlas RNA-seq Analysis Results"
 intro_text: "This report summarizes the quality control metrics for RNA-seq analysis."
 
-# Custom logo (optional)
+# Custom logo
 custom_logo: "https://www.ebi.ac.uk/gxa/resources/images/expression-atlas.png"
-custom_logo_url: "https://elixir-europe.org/sites/default/files/ebi_official_logo.png"
+custom_logo_url: "https://www.ebi.ac.uk/gxa/"
 custom_logo_title: "Expression Atlas"
 
 # Clean up sample names to remove sensitive paths
@@ -21,18 +21,21 @@ extra_fn_clean_exts:
   - "_R2"
   - "_001"
 
-# Remove any modules you don't want to show (optional)
-exclude_modules:
-  - "custom_content"  # if it contains sensitive info
+# Remove file search patterns that might expose sensitive paths
+fn_ignore_paths:
+  - "*/work/*"
+  - "*/tmp/*"
+  - "*/.nextflow/*"
 
-# Hide specific columns that might contain sensitive info
-table_columns_visible:
-  general_stats_table:
-    # Hide any columns that might show file paths or sensitive data
-    # Adjust based on your specific needs
+# Sample name cleaning
+sample_names_ignore:
+  - "*work*"
+  - "*tmp*"
+  - "*cache*"
 
-# Sample name replacement to anonymize if needed
-sample_names_replace:
-  # Example: replace internal IDs with generic names
-  # "internal_id_123": "Sample_1"
-  # "internal_id_456": "Sample_2"
+# Custom report header to replace workflow summary info
+report_header_info:
+  - "Pipeline": "nf-core/rnaseq"
+  - "Configuration": "https://github.com/your-org/configs"
+  - "Analysis Platform": "Expression Atlas"
+  - "Documentation": "https://www.ebi.ac.uk/expression-atlas/"
