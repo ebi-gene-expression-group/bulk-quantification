@@ -165,7 +165,7 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_yeast.config" \\
+        -c "${workflow.projectDir}/conf/star_monocot_plants.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --without-wave \\
