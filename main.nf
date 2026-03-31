@@ -165,7 +165,7 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_monocot_plants.config" \\
+        -c "${workflow.projectDir}/conf/star_yeast.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --without-wave \\
@@ -180,7 +180,9 @@ process RUN_RNASEQ {
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
-        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" 
+        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
+        -with-tower \\
+        -name "nf_core_rnaseq_${EXP_ID}"
 
 # \\
 #    && nextflow clean -f
