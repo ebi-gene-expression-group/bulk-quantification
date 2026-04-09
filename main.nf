@@ -167,6 +167,7 @@ process RUN_RNASEQ {
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -c "${workflow.projectDir}/conf/star_default.config" \\
+        -c "${workflow.projectDir}/conf/bbsplit_fix.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --skip_bbsplit false \\
