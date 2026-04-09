@@ -69,7 +69,7 @@ if (!fastq_rawdata_dir) {
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
-params.contamination_index = "${referencePath}/contamination/bbsplit_index/animal"
+params.contamination_index = "${referencePath}/contamination/kraken2/kraken2_standard8"
 
 
 
@@ -167,11 +167,11 @@ process RUN_RNASEQ {
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -c "${workflow.projectDir}/conf/star_default.config" \\
-        -c "${workflow.projectDir}/conf/bbsplit_fix.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
-        --skip_bbsplit false \\
-        --bbsplit_index "${params.contamination_index}" \\
+        --contaminant_screening kraken2_bracken \\
+        --kraken_db /shared/databases/kraken2_standard8 \\
+        --skip_bbsplit true \\
         --save_bbsplit_reads \\
         --without-wave \\
         --skip_fastqc  \\
@@ -180,7 +180,6 @@ process RUN_RNASEQ {
         --skip_dupradar \\
         --skip_preseq \\
         --skip_biotype_qc \\
-        --skip_kraken2 \\
         --skip_stringtie \\
         --skip_deseq2_qc \\
         --skip_markduplicates \\
