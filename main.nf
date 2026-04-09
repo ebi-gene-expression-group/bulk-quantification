@@ -69,6 +69,7 @@ if (!fastq_rawdata_dir) {
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
+params.contamination_index = "${referencePath}/contamination/bbsplit_index/animal"
 
 
 
@@ -165,9 +166,12 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_yeast.config" \\
+        -c "${workflow.projectDir}/conf/star_default.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
+        --skip_bbsplit false \\
+        --bbsplit_index "${params.contamination_index}" \\
+        --save_bbsplit_reads \\
         --without-wave \\
         --skip_fastqc  \\
         --skip_rseqc  \\
