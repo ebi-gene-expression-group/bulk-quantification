@@ -171,11 +171,11 @@ process RUN_RNASEQ {
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
         --kraken_db "${params.contamination_index}" \\
-        --skip_bbsplit true \\
-        --save_bbsplit_reads \\
         --without-wave \\
-        --skip_fastqc  \\
-        --skip_rseqc  \\
+        --save_unaligned \\
+        --skip_bbsplit \\
+        --skip_fastqc \\
+        --skip_rseqc \\
         --skip_qualimap \\
         --skip_dupradar \\
         --skip_preseq \\
