@@ -170,7 +170,7 @@ process RUN_RNASEQ {
         -profile singularity \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
-        --kraken_db /shared/databases/kraken2_standard8 \\
+        --kraken_db "${params.contamination_index}" \\
         --skip_bbsplit true \\
         --save_bbsplit_reads \\
         --without-wave \\
