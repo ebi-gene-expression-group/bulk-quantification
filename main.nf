@@ -70,6 +70,7 @@ params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
 params.contamination_index = "${referencePath}/contamination/kraken2/kraken2_standard8"
+params.ribo_database_manifest = "${referencePath}/contamination/ribo/silva.manifest.tsv"
 
 
 
@@ -166,7 +167,7 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_dicot_plants.config" \\
+        -c "${workflow.projectDir}/conf/star_default.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
@@ -184,6 +185,9 @@ process RUN_RNASEQ {
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
+        --remove_ribo_rna \\
+        --ribo_removal_tool bowtie2 \
+        --ribo_database_manifest "${params.ribo_database_manifest}" \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
