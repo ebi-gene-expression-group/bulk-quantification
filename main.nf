@@ -195,7 +195,7 @@ process RUN_RNASEQ {
         --skip_markduplicates \\
         --skip_bigwig \\
         --remove_ribo_rna \\
-        --ribo_removal_tool sortmerna \
+        --ribo_removal_tool sortmerna \\
         ${ribo_index} \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
