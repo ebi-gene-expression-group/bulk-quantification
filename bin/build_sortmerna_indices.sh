@@ -51,6 +51,17 @@ nextflow run subworkflows/rnaseq/main.nf \
     --skip_pseudo_alignment \
     --skip_fastqc \
     --skip_trimming \
+    --skip_umi_extract \
+    --skip_bbsplit \
+    --skip_rseqc \
+    --skip_qualimap \
+    --skip_dupradar \
+    --skip_preseq \
+    --skip_deseq2_qc \
+    --skip_biotype_qc \
+    --skip_stringtie \
+    --skip_multiqc \
+    --skip_qc \
     -profile atlas \
     -work-dir ${WORK_DIR}/work \
     -resume
