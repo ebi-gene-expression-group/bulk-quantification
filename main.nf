@@ -171,6 +171,7 @@ process RUN_RNASEQ {
         echo "Using existing SortMeRNA index from: ${params.ribo_database_index}"
     else
         echo "SortMeRNA index not found. Create a new index..."
+        exit 1
     fi
 
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
@@ -196,7 +197,7 @@ process RUN_RNASEQ {
         --skip_bigwig \\
         --remove_ribo_rna \\
         --ribo_removal_tool sortmerna \\
-        ${ribo_index} \\
+        \${ribo_index} \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
