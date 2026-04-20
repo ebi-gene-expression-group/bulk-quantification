@@ -37,6 +37,10 @@ echo "IIII" | gzip >> ${WORK_DIR}/dummy_R1.fq.gz
 
 cp ${WORK_DIR}/dummy_R1.fq.gz ${WORK_DIR}/dummy_R2.fq.gz
 
+echo "here"
+ls
+echo "now here"
+ls ../
 
 # Run nf-core/rnaseq with only index building
 nextflow run ../subworkflows/rnaseq/main.nf \
