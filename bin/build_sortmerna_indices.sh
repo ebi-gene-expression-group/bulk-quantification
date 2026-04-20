@@ -8,7 +8,7 @@ SILVA_VERSION="138.2"
 
 # Paths
 GENOME_DIR="${REFERENCE_BASE}/homo_sapiens/Ensembl/${GENOME_VERSION}/Sequence/WholeGenomeFasta/Homo_sapiens.${GENOME_VERSION}.dna.toplevel.fa"
-GENE_DIR="${REFERENCE_BASE}/homo_sapiens/Ensembl/${GENOME_VERSION}/Annotation/Genes/Homo_sapiens.${GENOME_VERSION}.114.gtf
+GENE_DIR="${REFERENCE_BASE}/homo_sapiens/Ensembl/${GENOME_VERSION}/Annotation/Genes/Homo_sapiens.${GENOME_VERSION}.114.gtf"
 RIBO_DIR="${REFERENCE_BASE}/contamination/ribo"
 INDEX_DIR="${REFERENCE_BASE}/contamination/sortmerna/index"
 
