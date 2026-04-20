@@ -39,7 +39,6 @@ cp ${WORK_DIR}/dummy_R1.fq.gz ${WORK_DIR}/dummy_R2.fq.gz
 
 # Run nf-core/rnaseq with only index building
 nextflow run subworkflows/rnaseq/main.nf \
-    -c ../nextflow.config \
     --input ${WORK_DIR}/dummy_samplesheet.csv \
     --outdir ${WORK_DIR}/output \
     --fasta ${GENOME_DIR} \
