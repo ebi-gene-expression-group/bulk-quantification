@@ -43,7 +43,7 @@ echo "now here"
 ls ../
 
 # Run nf-core/rnaseq with only index building
-nextflow run ../subworkflows/rnaseq/main.nf \
+nextflow run subworkflows/rnaseq/main.nf \
     --input ${WORK_DIR}/dummy_samplesheet.csv \
     --outdir ${WORK_DIR}/output \
     --fasta ${GENOME_DIR} \
