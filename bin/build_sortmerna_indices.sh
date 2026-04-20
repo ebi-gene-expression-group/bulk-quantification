@@ -14,6 +14,7 @@ INDEX_DIR="${REFERENCE_BASE}/contamination/sortmerna/index"
 
 # Create a temporary working directory
 WORK_DIR="${NF_WORKDIR}/ribo_index/"
+mkdir -p ${WORK_DIR}
 trap "rm -rf ${WORK_DIR}" EXIT
 
 echo "=== Building SortMeRNA Index ==="
