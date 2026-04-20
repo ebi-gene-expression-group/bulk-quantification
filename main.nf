@@ -167,7 +167,7 @@ process RUN_RNASEQ {
     
     # Check if index directory exists AND is not empty
     if [ -d "${params.ribo_database_index}" ] && [ "\$(ls -A ${params.ribo_database_index})" ]; then
-        ribo_index="--sortmerna_index ${params.ribo_database_index}"
+        RIBO_INDEX="--sortmerna_index ${params.ribo_database_index}"
         echo "Using existing SortMeRNA index from: ${params.ribo_database_index}"
     else
         echo "SortMeRNA index not found. Create a new index..."
@@ -197,7 +197,7 @@ process RUN_RNASEQ {
         --skip_bigwig \\
         --remove_ribo_rna \\
         --ribo_removal_tool sortmerna \\
-        \${ribo_index} \\
+        \$RIBO_INDEX \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
