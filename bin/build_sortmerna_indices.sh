@@ -37,10 +37,9 @@ echo "IIII" | gzip >> ${WORK_DIR}/dummy_R1.fq.gz
 
 cp ${WORK_DIR}/dummy_R1.fq.gz ${WORK_DIR}/dummy_R2.fq.gz
 
-PROJECT_DIR="$(pwd)"
 
 # Run nf-core/rnaseq with only index building
-nextflow run ${PROJECT_DIR}/../subworkflows/rnaseq/main.nf \
+nextflow run ../subworkflows/rnaseq/main.nf \
     --input ${WORK_DIR}/dummy_samplesheet.csv \
     --outdir ${WORK_DIR}/output \
     --fasta ${GENOME_DIR} \
