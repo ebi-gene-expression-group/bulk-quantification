@@ -167,7 +167,7 @@ process RUN_RNASEQ {
     
     # Check if index directory exists AND is not empty
     if [ -d "${params.ribo_database_index}" ] && [ "\$(ls -A ${params.ribo_database_index})" ]; then
-        ribo_index="--sortmerna_index '\${params.ribo_database_index}'"
+        ribo_index="--sortmerna_index '${params.ribo_database_index}'"
         echo "Using existing SortMeRNA index from: ${params.ribo_database_index}"
     else
         echo "SortMeRNA index not found. Create a new index..."
