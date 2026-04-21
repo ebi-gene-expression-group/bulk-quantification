@@ -197,7 +197,7 @@ process RUN_RNASEQ {
         --skip_bigwig \\
         --remove_ribo_rna \\
         --ribo_removal_tool sortmerna \\
-        --ribo_database_manifest params.ribo_database_manifest \\
+        --ribo_database_manifest "${params.ribo_database_manifest}" \\
         \$RIBO_INDEX \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
