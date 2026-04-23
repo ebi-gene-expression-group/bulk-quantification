@@ -175,13 +175,13 @@ process RUN_RNASEQ {
         missing=0
         while IFS= read -r f; do
             [[ -z "$f" ]] && continue
-            if [[ ! -e "$f" ]]; then
-                echo "Missing: $f"
+            if [[ ! -e "\$f" ]]; then
+                echo "Missing: \$f"
                 missing=1
             fi
         done < "${params.ribo_database_manifest}"
     
-        if [[ $missing -eq 0 ]]; then
+        if [[ \$missing -eq 0 ]]; then
             echo "All files exist."
         else
             echo "Some files missing and sortmerna likely to fail, exiting..."
