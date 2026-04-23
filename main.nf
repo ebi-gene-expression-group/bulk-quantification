@@ -201,8 +201,8 @@ process RUN_RNASEQ {
     fi
 
     # Check if contamination index directory exists AND is not empty
-    if [ -d "${CONTAM_INDEX}" ] && [ "\$(ls -A ${CONTAM_INDEX})" ]; then
-        echo "Using existing SortMeRNA index from: ${RIBO_MANIFEST}"
+    if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A \${CONTAM_INDEX})" ]; then
+        echo "Using existing SortMeRNA index from: \${RIBO_MANIFEST}"
     else
         echo "SortMeRNA index not found. Create a new index..."
         exit 1
