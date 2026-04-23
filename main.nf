@@ -174,7 +174,7 @@ process RUN_RNASEQ {
         cat ${params.ribo_database_manifest}
         missing=0
         while IFS= read -r f; do
-            [[ -z "$f" ]] && continue
+            [[ -z "\$f" ]] && continue
             if [[ ! -e "\$f" ]]; then
                 echo "Missing: \$f"
                 missing=1
