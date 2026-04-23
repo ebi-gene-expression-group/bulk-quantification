@@ -161,12 +161,33 @@ process RUN_RNASEQ {
         echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
     fi
 
-    RIBO_INDEX=\$(grep -oP '"ribo_database_index"\\s*:\\s*"\\K[^"]+' "${params_json}")
-    RIBO_MANIFEST=\$(grep -oP '"ribo_database_manifest"\\s*:\\s*"\\K[^"]+' "${params_json}")
-    CONTAM_INDEX=\$(grep -oP '"contamination_index"\\s*:\\s*"\\K[^"]+' "${params_json}")
+    if command -v jq &> /dev/null; then
+        RIBO_INDEX=\$(jq -r '.ribo_database_index // empty' "${params_json}")
+        RIBO_MANIFEST=\$(jq -r '.ribo_database_manifest // empty' "${params_json}")
+        CONTAM_INDEX=\$(jq -r '.contamination_index // empty' "${params_json}")
+    else
+        RIBO_INDEX=\$(grep -oP '"ribo_database_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        RIBO_MANIFEST=\$(grep -oP '"ribo_database_manifest"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        CONTAM_INDEX=\$(grep -oP '"contamination_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+    fi
+
+    if [[ -z "\${RIBO_INDEX}" ]]; then
+        echo "Missing required ribo_database_index in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${RIBO_MANIFEST}" ]]; then
+        echo "Missing required ribo_database_manifest in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${CONTAM_INDEX}" ]]; then
+        echo "Missing required contamination_index in ${params_json}"
+        exit 1
+    fi
     
     # Check if ribo database index directory exists AND is not empty
-    if [ -d "\${RIBO_INDEX}" ] && [ "\$(ls -A \${RIBO_INDEX})" ]; then
+    if [ -d "\${RIBO_INDEX}" ] && [ "\$(ls -A "\${RIBO_INDEX}")" ]; then
         echo "Using existing SortMeRNA index from: \${RIBO_INDEX}"
     else
         echo "SortMeRNA index not found. Create a new index..."
@@ -197,10 +218,10 @@ process RUN_RNASEQ {
     fi
 
     # Check if contamination index directory exists AND is not empty
-    if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A \${CONTAM_INDEX})" ]; then
-        echo "Using existing SortMeRNA index from: \${RIBO_MANIFEST}"
+    if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A "\${CONTAM_INDEX}")" ]; then
+        echo "Using existing contamination index from: \${CONTAM_INDEX}"
     else
-        echo "SortMeRNA index not found. Create a new index..."
+        echo "Contamination index not found: \${CONTAM_INDEX}"
         exit 1
     fi
 
@@ -228,7 +249,7 @@ process RUN_RNASEQ {
         --remove_ribo_rna \\
         --ribo_removal_tool sortmerna \\
         --ribo_database_manifest "\${RIBO_MANIFEST}" \\
-        --sortmerna_index \${RIBO_INDEX} \\
+        --sortmerna_index "\${RIBO_INDEX}" \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
@@ -294,4 +315,3 @@ workflow.onComplete {
         excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
-
