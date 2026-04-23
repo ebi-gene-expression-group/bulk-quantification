@@ -71,7 +71,6 @@ def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
 
 
-
 // -------------------- PROCESSES -------------------- //
 
 // include a process that checks goofys mount, mounts if non-existent
@@ -162,31 +161,102 @@ process RUN_RNASEQ {
         echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
     fi
 
+    if command -v jq &> /dev/null; then
+        RIBO_INDEX=\$(jq -r '.ribo_database_index // empty' "${params_json}")
+        RIBO_MANIFEST=\$(jq -r '.ribo_database_manifest // empty' "${params_json}")
+        CONTAM_INDEX=\$(jq -r '.contamination_index // empty' "${params_json}")
+    else
+        RIBO_INDEX=\$(grep -oP '"ribo_database_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        RIBO_MANIFEST=\$(grep -oP '"ribo_database_manifest"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        CONTAM_INDEX=\$(grep -oP '"contamination_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+    fi
+
+    if [[ -z "\${RIBO_INDEX}" ]]; then
+        echo "Missing required ribo_database_index in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${RIBO_MANIFEST}" ]]; then
+        echo "Missing required ribo_database_manifest in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${CONTAM_INDEX}" ]]; then
+        echo "Missing required contamination_index in ${params_json}"
+        exit 1
+    fi
+    
+    # Check if ribo database index directory exists AND is not empty
+    if [ -d "\${RIBO_INDEX}" ] && [ "\$(ls -A "\${RIBO_INDEX}")" ]; then
+        echo "Using existing SortMeRNA index from: \${RIBO_INDEX}"
+    else
+        echo "SortMeRNA index not found. Create a new index..."
+        exit 1
+    fi
+
+    if [ -f "\${RIBO_MANIFEST}" ]; then
+        echo "Using existing SortMeRNA manifest from: \${RIBO_MANIFEST}"
+        cat \${RIBO_MANIFEST}
+        missing=0
+        while IFS= read -r f; do
+            [[ -z "\$f" ]] && continue
+            if [[ ! -e "\$f" ]]; then
+                echo "Missing: \$f"
+                missing=1
+            fi
+        done < "\${RIBO_MANIFEST}"
+    
+        if [[ \$missing -eq 0 ]]; then
+            echo "All files exist."
+        else
+            echo "Some files missing and sortmerna likely to fail, exiting..."
+            exit 1
+        fi
+    else
+        echo "SortMeRNA manifest not found. Create a new manifest..."
+        exit 1
+    fi
+
+    # Check if contamination index directory exists AND is not empty
+    if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A "\${CONTAM_INDEX}")" ]; then
+        echo "Using existing contamination index from: \${CONTAM_INDEX}"
+    else
+        echo "Contamination index directory not found or empty: \${CONTAM_INDEX}"
+        exit 1
+    fi
+
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_yeast.config" \\
+        -c "${workflow.projectDir}/conf/star_default.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
+        --contaminant_screening kraken2_bracken \\
+        --kraken_db "\${CONTAM_INDEX}" \\
         --without-wave \\
-        --skip_fastqc  \\
-        --skip_rseqc  \\
+        --save_unaligned \\
+        --skip_bbsplit \\
+        --skip_fastqc \\
+        --skip_rseqc \\
         --skip_qualimap \\
         --skip_dupradar \\
         --skip_preseq \\
         --skip_biotype_qc \\
-        --skip_kraken2 \\
         --skip_stringtie \\
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
+        --remove_ribo_rna \\
+        --ribo_removal_tool sortmerna \\
+        --ribo_database_manifest "\${RIBO_MANIFEST}" \\
+        --sortmerna_index "\${RIBO_INDEX}" \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
 
 # \\
 #    && nextflow clean -f
-
+    
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
     
@@ -245,4 +315,3 @@ workflow.onComplete {
         excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
-
