@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 
+import os
 import argparse
 from ete3 import NCBITaxa
 
-ncbi = NCBITaxa()
+dbfile = "./taxonomy/taxa.sqlite"
+
+if not os.path.exists(dbfile):
+    print("Downloading taxonomy database...")
+    ncbi = NCBITaxa(dbfile=dbfile)
+    ncbi.update_taxonomy_database()
+else:
+    ncbi = NCBITaxa(dbfile=dbfile)
 
 # Reference taxids
 GROUPS = {
@@ -13,7 +21,6 @@ GROUPS = {
     "yeast": {4892, 147537, 4893},
     "protist": {554915, 33630, 33634, 543769}
 }
-
 
 def classify_species(taxid):
     try:
