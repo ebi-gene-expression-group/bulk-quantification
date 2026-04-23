@@ -221,7 +221,7 @@ process RUN_RNASEQ {
     if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A "\${CONTAM_INDEX}")" ]; then
         echo "Using existing contamination index from: \${CONTAM_INDEX}"
     else
-        echo "Contamination index not found: \${CONTAM_INDEX}"
+        echo "Contamination index directory not found or empty: \${CONTAM_INDEX}"
         exit 1
     fi
 
