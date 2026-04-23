@@ -4,7 +4,7 @@ import os
 import argparse
 from ete3 import NCBITaxa
 
-dbfile = "./taxonomy/taxa.sqlite"
+dbfile = "${BULK_REFERENCES_DIR}/taxonomy/taxa.sqlite"
 os.makedirs(os.path.dirname(dbfile), exist_ok=True)
 
 try:
