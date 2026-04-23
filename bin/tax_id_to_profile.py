@@ -5,13 +5,19 @@ import argparse
 from ete3 import NCBITaxa
 
 dbfile = "./taxonomy/taxa.sqlite"
+os.makedirs(os.path.dirname(dbfile), exist_ok=True)
 
-if not os.path.exists(dbfile):
-    print("Downloading taxonomy database...")
-    ncbi = NCBITaxa(dbfile=dbfile)
-    ncbi.update_taxonomy_database()
-else:
-    ncbi = NCBITaxa(dbfile=dbfile)
+try:
+    if not os.path.exists(dbfile):
+        print(f"Downloading taxonomy database to {dbfile}...", file=sys.stderr)
+        ncbi = NCBITaxa(dbfile=dbfile)
+        ncbi.update_taxonomy_database()
+    else:
+        ncbi = NCBITaxa(dbfile=dbfile)
+except Exception as e:
+    print(f"Failed to initialize NCBI taxonomy database: {e}", file=sys.stderr)
+    sys.exit(1)
+
 
 # Reference taxids
 GROUPS = {
