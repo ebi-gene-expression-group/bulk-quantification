@@ -161,9 +161,9 @@ process RUN_RNASEQ {
         echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
     fi
 
-    RIBO_INDEX=$(jq -r '.ribo_database_index // empty' "${params_json}")
-    RIBO_MANIFEST=$(jq -r '.ribo_database_manifest // empty' "${params_json}")
-    CONTAM_INDEX=$(jq -r '.contamination_index // empty' "${params_json}")
+    RIBO_INDEX=\$(jq -r '.ribo_database_index // empty' "${params_json}")
+    RIBO_MANIFEST=\$(jq -r '.ribo_database_manifest // empty' "${params_json}")
+    CONTAM_INDEX=\$(jq -r '.contamination_index // empty' "${params_json}")
 
     echo \$RIBO_INDEX
     echo \$RIBO_MANIFEST
