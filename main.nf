@@ -164,10 +164,6 @@ process RUN_RNASEQ {
     RIBO_INDEX=\$(grep -oP '"ribo_database_index"\\s*:\\s*"\\K[^"]+' "${params_json}")
     RIBO_MANIFEST=\$(grep -oP '"ribo_database_manifest"\\s*:\\s*"\\K[^"]+' "${params_json}")
     CONTAM_INDEX=\$(grep -oP '"contamination_index"\\s*:\\s*"\\K[^"]+' "${params_json}")
-
-    echo \$RIBO_INDEX
-    echo \$RIBO_MANIFEST
-    echo \$CONTAM_INDEX
     
     # Check if ribo database index directory exists AND is not empty
     if [ -d "\${RIBO_INDEX}" ] && [ "\$(ls -A \${RIBO_INDEX})" ]; then
