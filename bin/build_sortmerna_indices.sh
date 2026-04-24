@@ -10,7 +10,7 @@ SILVA_VERSION="138.2"
 GENOME_DIR="${REFERENCE_BASE}/homo_sapiens/Ensembl/${GENOME_VERSION}/Sequence/WholeGenomeFasta/Homo_sapiens.${GENOME_VERSION}.dna.toplevel.fa"
 GENE_DIR="${REFERENCE_BASE}/homo_sapiens/Ensembl/${GENOME_VERSION}/Annotation/Genes/Homo_sapiens.${GENOME_VERSION}.114.gtf"
 RIBO_DIR="${REFERENCE_BASE}/contamination/ribo"
-INDEX_DIR="${REFERENCE_BASE}/contamination/sortmerna/index"
+INDEX_DIR="${REFERENCE_BASE}/contamination/ribo/silva/sortmerna"
 
 # Create a temporary working directory
 WORK_DIR="${NF_WORKDIR}/ribo_index/"
