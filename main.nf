@@ -119,9 +119,9 @@ process SET_PARAMS {
 }
 
 // Get species information
-process GET_TAX_ID {
+process GET_STAR_PROFILE {
 
-    conda: env/ete3.yaml
+    conda: env/ete_env.yaml
 
     input:
         val EXP_ID
@@ -325,7 +325,7 @@ process HANDLE_STATUS {
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = SET_PARAMS(params.EXP_ID)
-    star_config_ch = GET_TAX_ID(params.EXP_ID)
+    star_config_ch = GET_STAR_PROFILE(params.EXP_ID)
     RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
 }
 
