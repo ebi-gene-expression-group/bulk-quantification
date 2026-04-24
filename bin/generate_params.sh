@@ -37,7 +37,7 @@ fetch_species_names() {
 
   if [[ "$no" -eq 1 ]]; then
     local SP="$species_list"
-    echo "$SP" >&2
+    echo "$SP"
   else
     >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$exp_id"
     return 1
