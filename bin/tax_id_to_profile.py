@@ -5,7 +5,13 @@ import sys
 import argparse
 from ete3 import NCBITaxa
 
-dbfile = "${BULK_REFERENCES_DIR}/taxonomy/taxa.sqlite"
+bulk_reference_dir = os.environ.get("BULK_REFERENCES_DIR")
+
+if bulk_reference_dir is None:
+    raise ValueError("BULK_REFERENCES_DIR not set")
+
+
+dbfile = os.path.join(bulk_reference_dir, "taxonomy", "taxa.sqlite")
 os.makedirs(os.path.dirname(dbfile), exist_ok=True)
 
 try:
