@@ -37,7 +37,7 @@ fetch_species_names() {
 
   if [[ "$no" -eq 1 ]]; then
     local SP="$species_list"
-    echo "$SP"
+    echo "$SP" >&2
   else
     >&2 printf "WARN: %s Organism entries for %s\n" "$no" "$exp_id"
     return 1
@@ -49,13 +49,14 @@ export SPECIES=$(fetch_species_names "${EXP_ID}")
 export SPECIES_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
 
 genome=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
+tax_id=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $2}')
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
   RELEASE="$ENSEMBL_RELEASE"
 elif [[ "$genome" == "ensemblgenomes" ]]; then
   RELEASE="$ENSEMBL_GENOME_RELEASE"
 else
-  echo "$genome is not ensembl or ensemblgenomes"
+  echo "$genome is not ensembl or ensemblgenomes" >&2
   exit 1
 fi
 
@@ -64,3 +65,5 @@ export RELEASE
 export ASSEMBLY=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
 
 envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
+
+echo $tax_id
