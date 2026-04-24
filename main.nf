@@ -103,8 +103,8 @@ process GET_SAMPLES {
 }
 
 
-// Get species information
-process GET_SPECIES {
+// Set experiment specific parameters
+process SET_PARAMS {
 
     input:
         val EXP_ID
@@ -114,7 +114,22 @@ process GET_SPECIES {
 
     script:
     """
-    ${projectDir}/bin/generate_params.sh ${EXP_ID}
+    bash ${projectDir}/bin/generate_params.sh ${EXP_ID}
+    """
+}
+
+// Get species information
+process GET_TAX_ID {
+
+    input:
+        val EXP_ID
+
+    output:
+        val TAX_ID
+
+    script:
+    """
+    $TAX_ID=\$(bash ${projectDir}/bin/generate_params.sh ${EXP_ID})
     """
 }
 
@@ -126,6 +141,7 @@ process RUN_RNASEQ {
     input:
     path samplesheet
     val  EXP_ID
+    val TAX_ID
     path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
@@ -225,10 +241,20 @@ process RUN_RNASEQ {
         exit 1
     fi
 
+    # Get STAR profile name from Python script
+    STAR_PROFILE=\$(python "${workflow.projectDir}/bin/tax_id_to_profile.py" "${TAX_ID}" | tr -d '[:space:]')
+
+    if [[ -z "\${STAR_PROFILE}" ]]; then
+        echo "Python script did not return a STAR profile, using default"
+        STAR_PROFILE="default"
+    fi
+
+    echo "Using STAR profile: \${STAR_PROFILE}"
+
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "${workflow.projectDir}/conf/star_default.config" \\
+        -c "${workflow.projectDir}/conf/star_\${STAR_PROFILE}.config" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
@@ -294,8 +320,9 @@ process HANDLE_STATUS {
 
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
-    params_json_ch = GET_SPECIES(params.EXP_ID)
-    RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+    params_json_ch = SET_PARAMS(params.EXP_ID)
+    TAX_ID = GET_TAX_ID(params.EXP_ID)
+    RUN_RNASEQ(samplesheet, params.EXP_ID, TAX_ID, params_json_ch)
 }
 
 workflow.onComplete {
