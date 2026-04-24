@@ -327,7 +327,7 @@ workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     SET_PARAMS(params.EXP_ID)
     star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
-    //RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, SET_PARAMS.out.params_json)
+    RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, SET_PARAMS.out.params_json)
 }
 
 workflow.onComplete {
