@@ -129,7 +129,7 @@ process GET_TAX_ID {
 
     script:
     """
-    $TAX_ID=\$(bash ${projectDir}/bin/generate_params.sh ${EXP_ID})
+    TAX_ID=\$(bash ${projectDir}/bin/generate_params.sh ${EXP_ID})
     """
 }
 
