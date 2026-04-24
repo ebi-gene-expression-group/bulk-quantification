@@ -125,7 +125,7 @@ process GET_TAX_ID {
         val EXP_ID
 
     output:
-        val TAX_ID from stdout
+        stdout emit: TAX_ID
 
     script:
     """
@@ -321,7 +321,7 @@ process HANDLE_STATUS {
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = SET_PARAMS(params.EXP_ID)
-    TAX_ID = GET_TAX_ID(params.EXP_ID)
+    TAX_ID = GET_TAX_ID.out.TAX_ID.map { it.trim() }
     RUN_RNASEQ(samplesheet, params.EXP_ID, TAX_ID, params_json_ch)
 }
 
