@@ -121,7 +121,7 @@ process SET_PARAMS {
 // Get species information
 process GET_STAR_PROFILE {
 
-    conda: env/ete_env.yaml
+    conda "${projectDir}/env/ete_env.yaml"
 
     input:
         val EXP_ID
