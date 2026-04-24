@@ -125,11 +125,11 @@ process GET_TAX_ID {
         val EXP_ID
 
     output:
-        val TAX_ID
+        val TAX_ID from stdout
 
     script:
     """
-    TAX_ID=\$(bash ${projectDir}/bin/generate_params.sh ${EXP_ID})
+    bash ${projectDir}/bin/generate_params.sh ${EXP_ID}
     """
 }
 
