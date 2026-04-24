@@ -110,11 +110,12 @@ process SET_PARAMS {
         val EXP_ID
 
     output:
-        path "${EXP_ID}_params.json"
+        path "${EXP_ID}_params.json", emit: params_json
+        path "tax_id.txt",            emit: tax_id
 
     script:
     """
-    bash ${projectDir}/bin/generate_params.sh ${EXP_ID}
+    bash ${projectDir}/bin/generate_params.sh ${EXP_ID} > tax_id.txt
     """
 }
 
@@ -124,14 +125,14 @@ process GET_STAR_PROFILE {
     conda "${projectDir}/env/ete_env.yaml"
 
     input:
-        val EXP_ID
+        path tax_id_file
 
     output:
         path "star_profile.config"
 
     script:
     """
-    TAX_ID=\$(bash ${projectDir}/bin/generate_params.sh ${EXP_ID})
+    TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
 
     # Get STAR profile name from Python script
     STAR_PROFILE=\$(python "${workflow.projectDir}/bin/tax_id_to_profile.py" "\${TAX_ID}" | tr -d '[:space:]')
@@ -324,9 +325,9 @@ process HANDLE_STATUS {
 
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
-    params_json_ch = SET_PARAMS(params.EXP_ID)
-    star_config_ch = GET_STAR_PROFILE(params.EXP_ID)
-    RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
+    SET_PARAMS(params.EXP_ID)
+    star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
+    RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, SET_PARAMS.out.params_json)
 }
 
 workflow.onComplete {
