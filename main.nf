@@ -208,16 +208,16 @@ process MULTIQC_SANITISATION {
     def sed_cmds = []
 
     if (params.referencePath)
-        sed_cmds << "-e 's#${params.referencePath}#<REFERENCES_PATH>#g'"
+        sed_cmds << "-e 's#${params.referencePath}#REFERENCES_PATH#g'"
 
     if (params.nf_workdir)
-        sed_cmds << "-e 's#${params.nf_workdir}#<WORKDIR>#g'"
+        sed_cmds << "-e 's#${params.nf_workdir}#WORKDIR#g'"
 
     if (params.outdir)
-        sed_cmds << "-e 's#${params.outdir}#<OUT_DIR>#g'"
+        sed_cmds << "-e 's#${params.outdir}#OUT_DIR#g'"
 
     if (workflow.projectDir)
-        sed_cmds << "-e 's#${workflow.projectDir}#<GIT-REPO>#g'"
+        sed_cmds << "-e 's#${workflow.projectDir}#GIT-REPO#g'"
 
     def sed_string = sed_cmds.join(' ')
 
