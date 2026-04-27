@@ -47,10 +47,10 @@ def classify_species(taxid):
             if lineage & taxids:
                 return group
 
-        return "other"
+        return "default"
 
     except Exception:
-        return "other"
+        return "default"
 
 
 def main():
