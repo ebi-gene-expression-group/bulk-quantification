@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 from ete3 import NCBITaxa
+import contextlib
 
 bulk_reference_dir = os.environ.get("BULK_REFERENCES_DIR")
 
@@ -16,9 +17,12 @@ os.makedirs(os.path.dirname(dbfile), exist_ok=True)
 
 try:
     if not os.path.exists(dbfile):
-        print(f"Downloading taxonomy database to {dbfile}...", file=sys.stderr)
-        ncbi = NCBITaxa(dbfile=dbfile)
-        ncbi.update_taxonomy_database()
+        # Suppress any output produced internally by ete3 during DB download/update
+        with open(os.devnull, "w") as devnull, \
+             contextlib.redirect_stdout(devnull), \
+             contextlib.redirect_stderr(devnull):
+            ncbi = NCBITaxa(dbfile=dbfile)
+            ncbi.update_taxonomy_database()
     else:
         ncbi = NCBITaxa(dbfile=dbfile)
 except Exception as e:
