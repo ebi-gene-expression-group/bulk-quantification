@@ -210,10 +210,10 @@ process MULTIQC_SANITISATION {
     def sed_cmds = []
     
     if (referencePath)
-        sed_cmds << "-e 's#${esc(params.referencePath)}#REFERENCES_PATH#g'"
+        sed_cmds << "-e 's#${esc(referencePath)}#REFERENCES_PATH#g'"
     
     if (nf_workdir)
-        sed_cmds << "-e 's#${esc(params.nf_workdir)}#WORKDIR#g'"
+        sed_cmds << "-e 's#${esc(nf_workdir)}#WORKDIR#g'"
     
     if (params.outdir)
         sed_cmds << "-e 's#${esc(params.outdir)}#OUT_DIR#g'"
