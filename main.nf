@@ -142,9 +142,16 @@ process GET_STAR_PROFILE {
         STAR_PROFILE="default"
     fi
 
-    echo "Using STAR profile: star_\${STAR_PROFILE}.config"
-
-    cp ${workflow.projectDir}/conf/star_\${STAR_PROFILE}.config star_profile.config
+    STAR_CONFIG="${workflow.projectDir}/conf/star_\${STAR_PROFILE}.config"
+    
+    echo "Using STAR profile: \$(basename "\${STAR_CONFIG}")"
+    
+    if [[ ! -f "\${STAR_CONFIG}" ]]; then
+        echo "ERROR: STAR profile config not found: \${STAR_CONFIG}" >&2
+        exit 1
+    fi
+    
+    cp "\${STAR_CONFIG}" star_profile.config
     """
 }
 
