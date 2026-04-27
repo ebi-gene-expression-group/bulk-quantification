@@ -215,22 +215,13 @@ process MULTIQC_SANITISATION {
     BACKUP_HTML="\$REPORT_DIR/multiqc_report_original.html"
     OUTPUT_HTML="\$REPORT_DIR/multiqc_report.html"
 
-    escape() {
-      printf '%s' "\$1" | sed 's#[\\\\/&]#\\\\\\\\&#g'
-    }
-
-    REF_ESC=\$(escape "${referencePath ?: ''}")
-    WORK_ESC=\$(escape "${nf_workdir ?: ''}")
-    OUT_ESC=\$(escape "${params.outdir ?: ''}")
-    PROJ_ESC=\$(escape "${workflow.projectDir ?: ''}")
-
     cp "\$INPUT_HTML" "\$BACKUP_HTML"
 
     sed \\
-      \${REF_ESC:+-e "s#\${REF_ESC}#<REFERENCES_PATH>#g"} \\
-      \${WORK_ESC:+-e "s#\${WORK_ESC}#<WORKDIR>#g"} \\
-      \${OUT_ESC:+-e "s#\${OUT_ESC}#<OUT_DIR>#g"} \\
-      \${PROJ_ESC:+-e "s#\${PROJ_ESC}#<GIT-REPO>#g"} \\
+      \${REF_ESC:+-e "s#\${referencePath}#REFERENCES_PATH#g"} \\
+      \${WORK_ESC:+-e "s#\${nf_workdir}#WORKDIR#g"} \\
+      \${OUT_ESC:+-e "s#\${params.outdir}#OUT_DIR#g"} \\
+      \${PROJ_ESC:+-e "s#\${workflow.projectDir}#GIT-REPO#g"} \\
       "\$BACKUP_HTML" > "\$OUTPUT_HTML"
 
     touch multiqc_sanitisation.done
