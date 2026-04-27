@@ -205,8 +205,8 @@ process MULTIQC_SANITISATION {
 
     script:
     // Build sed expressions in Groovy
-    def esc = { it.replaceAll(/([\\#&])/,'\\\\$1') }
-    
+    def esc = { it.toString().replaceAll(/([\\#&])/,'\\\\$1') }
+
     def sed_cmds = []
     
     if (params.referencePath)
