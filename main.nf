@@ -281,6 +281,10 @@ process RUN_RNASEQ {
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
+        --remove_ribo_rna \\
+        --ribo_removal_tool sortmerna \\
+        --ribo_database_manifest "\${RIBO_MANIFEST}" \\
+        --sortmerna_index "\${RIBO_INDEX}" \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
