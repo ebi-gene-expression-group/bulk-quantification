@@ -200,9 +200,6 @@ process MULTIQC_SANITISATION {
 
     publishDir params.outdir, mode: 'copy'
 
-    input:
-    path rnaseq_done
-
     output:
     path "multiqc_sanitisation.done"
 
@@ -262,6 +259,10 @@ workflow {
     params_json_ch = GET_SPECIES(params.EXP_ID)
     rnaseq_done = RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
     MULTIQC_SANITISATION(rnaseq_done)
+}
+
+workflow sanitise_only {
+    MULTIQC_SANITISATION()
 }
 
 workflow.onComplete {
