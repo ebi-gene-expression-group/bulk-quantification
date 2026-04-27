@@ -215,10 +215,10 @@ process MULTIQC_SANITISATION {
     cp "\$INPUT_HTML" "\$BACKUP_HTML"
 
     sed \\
-      \${REF_ESC:+-e "s#\${referencePath}#REFERENCES_PATH#g"} \\
-      \${WORK_ESC:+-e "s#\${nf_workdir}#WORKDIR#g"} \\
-      \${OUT_ESC:+-e "s#\${params.outdir}#OUT_DIR#g"} \\
-      \${PROJ_ESC:+-e "s#\${workflow.projectDir}#GIT-REPO#g"} \\
+      ${referencePath:+-e "s#${referencePath}#REFERENCES_PATH#g"} \\
+      ${nf_workdir:+-e "s#${nf_workdir}#WORKDIR#g"} \\
+      ${params.outdir:+-e "s#${params.outdir}#OUT_DIR#g"} \\
+      ${workflow.projectDir:+-e "s#${workflow.projectDir}#GIT-REPO#g"} \\
       "\$BACKUP_HTML" > "\$OUTPUT_HTML"
 
     touch multiqc_sanitisation.done
