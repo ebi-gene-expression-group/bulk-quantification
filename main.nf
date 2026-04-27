@@ -204,6 +204,23 @@ process MULTIQC_SANITISATION {
     path "multiqc_sanitisation.done"
 
     script:
+    // Build sed expressions in Groovy
+    def sed_cmds = []
+
+    if (params.referencePath)
+        sed_cmds << "-e 's#${params.referencePath}#<REFERENCES_PATH>#g'"
+
+    if (params.nf_workdir)
+        sed_cmds << "-e 's#${params.nf_workdir}#<WORKDIR>#g'"
+
+    if (params.outdir)
+        sed_cmds << "-e 's#${params.outdir}#<OUT_DIR>#g'"
+
+    if (workflow.projectDir)
+        sed_cmds << "-e 's#${workflow.projectDir}#<GIT-REPO>#g'"
+
+    def sed_string = sed_cmds.join(' ')
+
     """
     set -euo pipefail
 
@@ -214,12 +231,7 @@ process MULTIQC_SANITISATION {
 
     cp "\$INPUT_HTML" "\$BACKUP_HTML"
 
-    sed \\
-      ${referencePath:+-e "s#${referencePath}#REFERENCES_PATH#g"} \\
-      ${nf_workdir:+-e "s#${nf_workdir}#WORKDIR#g"} \\
-      ${params.outdir:+-e "s#${params.outdir}#OUT_DIR#g"} \\
-      ${workflow.projectDir:+-e "s#${workflow.projectDir}#GIT-REPO#g"} \\
-      "\$BACKUP_HTML" > "\$OUTPUT_HTML"
+    sed ${sed_string} "\$BACKUP_HTML" > "\$OUTPUT_HTML"
 
     touch multiqc_sanitisation.done
     """
