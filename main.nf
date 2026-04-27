@@ -215,20 +215,17 @@ process MULTIQC_SANITISATION {
     BACKUP_HTML="\$REPORT_DIR/multiqc_report_original.html"
     OUTPUT_HTML="\$REPORT_DIR/multiqc_report.html"
 
-    # Escape function for sed
     escape() {
-      printf '%s' "\$1" | sed 's/[\\/&]/\\\\&/g'
+      printf '%s' "\$1" | sed 's#[\\\\/&]#\\\\\\\\&#g'
     }
 
-    REF_ESC=\$(escape "${params.referencePath:-}")
-    WORK_ESC=\$(escape "${params.nf_workdir:-}")
-    OUT_ESC=\$(escape "${params.outdir:-}")
-    PROJ_ESC=\$(escape "${workflow.projectDir:-}")
+    REF_ESC=\$(escape "${referencePath ?: ''}")
+    WORK_ESC=\$(escape "${nf_workdir ?: ''}")
+    OUT_ESC=\$(escape "${params.outdir ?: ''}")
+    PROJ_ESC=\$(escape "${workflow.projectDir ?: ''}")
 
-    # Backup original
     cp "\$INPUT_HTML" "\$BACKUP_HTML"
 
-    # Apply replacements (only if non-empty)
     sed \\
       \${REF_ESC:+-e "s#\${REF_ESC}#<REFERENCES_PATH>#g"} \\
       \${WORK_ESC:+-e "s#\${WORK_ESC}#<WORKDIR>#g"} \\
