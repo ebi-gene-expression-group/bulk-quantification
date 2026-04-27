@@ -35,6 +35,14 @@ if (!referencePath) {
     System.exit(1)
 }
 
+// Check that NF_WORKDIR is defined in environment
+def nf_workdir = System.getenv('NF_WORKDIR')
+if (!nf_workdir) {
+    log.error "Environment variable NF_WORKDIR is not set."
+    log.info  "Please set it, e.g.: export NF_WORKDIR=/path/to/atlas"
+    System.exit(1)
+}
+
 
 def era_public_mount_path = System.getenv('ERA_PUBLIC_MOUNT_PATH')
 if (!era_public_mount_path) {
@@ -188,6 +196,50 @@ process RUN_RNASEQ {
     """
 }
 
+process MULTIQC_SANITISATION {
+
+    publishDir params.outdir, mode: 'copy'
+
+    input:
+    path rnaseq_done
+
+    output:
+    path "multiqc_sanitisation.done"
+
+    script:
+    """
+    set -euo pipefail
+
+    REPORT_DIR="${params.outdir}/multiqc/star_salmon"
+    INPUT_HTML="\$REPORT_DIR/multiqc_report.html"
+    BACKUP_HTML="\$REPORT_DIR/multiqc_report_original.html"
+    OUTPUT_HTML="\$REPORT_DIR/multiqc_report.html"
+
+    # Escape function for sed
+    escape() {
+      printf '%s' "\$1" | sed 's/[\\/&]/\\\\&/g'
+    }
+
+    REF_ESC=\$(escape "${params.referencePath:-}")
+    WORK_ESC=\$(escape "${params.nf_workdir:-}")
+    OUT_ESC=\$(escape "${params.outdir:-}")
+    PROJ_ESC=\$(escape "${workflow.projectDir:-}")
+
+    # Backup original
+    cp "\$INPUT_HTML" "\$BACKUP_HTML"
+
+    # Apply replacements (only if non-empty)
+    sed \\
+      \${REF_ESC:+-e "s#\${REF_ESC}#<REFERENCES_PATH>#g"} \\
+      \${WORK_ESC:+-e "s#\${WORK_ESC}#<WORKDIR>#g"} \\
+      \${OUT_ESC:+-e "s#\${OUT_ESC}#<OUT_DIR>#g"} \\
+      \${PROJ_ESC:+-e "s#\${PROJ_ESC}#<GIT-REPO>#g"} \\
+      "\$BACKUP_HTML" > "\$OUTPUT_HTML"
+
+    touch multiqc_sanitisation.done
+    """
+}
+
 // For cleanup
 process HANDLE_STATUS {
 
@@ -220,7 +272,8 @@ process HANDLE_STATUS {
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = GET_SPECIES(params.EXP_ID)
-    RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+    rnaseq_done = RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+    MULTIQC_SANITISATION(rnaseq_done)
 }
 
 workflow.onComplete {
