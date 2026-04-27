@@ -132,25 +132,27 @@ process GET_STAR_PROFILE {
 
     script:
     """
+    set -euo pipefail
+
     TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
 
-    # Get STAR profile name from Python script
+    # Get STAR profile name from Python script; non-zero exit aborts the process
     STAR_PROFILE=\$(python "${workflow.projectDir}/bin/tax_id_to_profile.py" "\${TAX_ID}" | tr -d '[:space:]')
 
-    if [[ -z "\${STAR_PROFILE}" ]]; then
-        echo "Python script did not return a STAR profile, using default"
+    if [[ "\${STAR_PROFILE}" == "other" ]]; then
+        echo "Python script returned unsupported STAR profile 'other', using default"
         STAR_PROFILE="default"
     fi
 
     STAR_CONFIG="${workflow.projectDir}/conf/star_\${STAR_PROFILE}.config"
-    
+
     echo "Using STAR profile: \$(basename "\${STAR_CONFIG}")"
-    
+
     if [[ ! -f "\${STAR_CONFIG}" ]]; then
         echo "ERROR: STAR profile config not found: \${STAR_CONFIG}" >&2
         exit 1
     fi
-    
+
     cp "\${STAR_CONFIG}" star_profile.config
     """
 }
