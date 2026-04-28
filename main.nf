@@ -39,7 +39,7 @@ if (!referencePath) {
 def nf_workdir = System.getenv('NF_WORKDIR')
 if (!nf_workdir) {
     log.error "Environment variable NF_WORKDIR is not set."
-    log.info  "Please set it, e.g.: export NF_WORKDIR=/path/to/atlas"
+    log.info  "Please set it, e.g.: export NF_WORKDIR=/path/to/workdir"
     System.exit(1)
 }
 
