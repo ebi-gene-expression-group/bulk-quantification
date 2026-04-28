@@ -148,7 +148,7 @@ process GET_STAR_PROFILE {
         exit 1
     fi
 
-    cp "\${STAR_CONFIG}" star_profile.config
+    cp "\${STAR_CONFIG}" .
     """
 }
 
@@ -160,7 +160,7 @@ process RUN_RNASEQ {
     input:
     path samplesheet
     val  EXP_ID
-    path star_config, stageAs: "star_profile.config"
+    path star_config
     path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
@@ -263,7 +263,7 @@ process RUN_RNASEQ {
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
-        -c "star_profile.config" \\
+        -c "${star_config}" \\
         -profile singularity \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
