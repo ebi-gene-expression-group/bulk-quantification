@@ -139,6 +139,7 @@ process RUN_RNASEQ {
 
     output:
     path "${EXP_ID}.rnaseq.done"
+    path "multiqc/star_salmon/multiqc_report.html"
 
     script:
     """
@@ -190,6 +191,10 @@ process RUN_RNASEQ {
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
     && nextflow clean -f
 
+    # Stage multiqc HTML into task work dir for downstream processes
+    mkdir -p multiqc/star_salmon
+    cp "${params.outdir}/multiqc/star_salmon/multiqc_report.html" multiqc/star_salmon/multiqc_report.html
+
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
     
@@ -198,12 +203,15 @@ process RUN_RNASEQ {
 
 process MULTIQC_SANITISATION {
 
-    publishDir params.outdir, mode: 'copy'
+    publishDir "${params.outdir}/multiqc/star_salmon", mode: 'copy', overwrite: true, pattern: "multiqc_report*.html"
+    publishDir params.outdir, mode: 'copy', pattern: "multiqc_sanitisation.done"
 
     input:
-    path rnaseq_done
+    path multiqc_html
 
     output:
+    path "multiqc_report.html"
+    path "multiqc_report_original.html"
     path "multiqc_sanitisation.done"
 
     script:
@@ -229,16 +237,8 @@ process MULTIQC_SANITISATION {
     """
     set -euo pipefail
 
-    REPORT_DIR="${params.outdir}/multiqc/star_salmon"
-    INPUT_HTML="\$REPORT_DIR/multiqc_report.html"
-    BACKUP_HTML="\$REPORT_DIR/multiqc_report_original.html"
-    OUTPUT_HTML="\$REPORT_DIR/multiqc_report.html"
-
-    if [ ! -f "\$BACKUP_HTML" ]; then
-        cp "\$INPUT_HTML" "\$BACKUP_HTML"
-    fi
-
-    sed ${sed_string} "\$BACKUP_HTML" > "\$OUTPUT_HTML"
+    cp "${multiqc_html}" multiqc_report_original.html
+    sed ${sed_string} multiqc_report_original.html > multiqc_report.html
 
     touch multiqc_sanitisation.done
     """
@@ -276,8 +276,8 @@ process HANDLE_STATUS {
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = GET_SPECIES(params.EXP_ID)
-    rnaseq_done = RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
-    MULTIQC_SANITISATION(rnaseq_done)
+    (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+    MULTIQC_SANITISATION(multiqc_html)
 }
 
 workflow.onComplete {
