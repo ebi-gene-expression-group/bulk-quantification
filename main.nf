@@ -288,7 +288,8 @@ process RUN_RNASEQ {
         --ribo_database_manifest "\${RIBO_MANIFEST}" \\
         --sortmerna_index "\${RIBO_INDEX}" \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
-        -with-tower \\
+        -with-tower 
+        --multiqc_config multiqc_star_profile.yaml \\
         -name "nf_core_rnaseq_${EXP_ID}"
 
 # \\
