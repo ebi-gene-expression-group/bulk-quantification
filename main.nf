@@ -192,8 +192,13 @@ process RUN_RNASEQ {
     && nextflow clean -f
 
     # Stage multiqc HTML into task work dir for downstream processes
+    MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
+    if [ ! -f "\$MULTIQC_HTML" ]; then
+        echo "ERROR: MultiQC report not found at \$MULTIQC_HTML" >&2
+        exit 1
+    fi
     mkdir -p multiqc/star_salmon
-    cp "${params.outdir}/multiqc/star_salmon/multiqc_report.html" multiqc/star_salmon/multiqc_report.html
+    cp "\$MULTIQC_HTML" multiqc/star_salmon/multiqc_report.html
 
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
