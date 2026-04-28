@@ -128,7 +128,7 @@ process GET_STAR_PROFILE {
         path tax_id_file
 
     output:
-        path "star_profile.config"
+        path "*.config"
 
     script:
     """
