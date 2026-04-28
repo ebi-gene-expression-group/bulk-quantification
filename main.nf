@@ -234,7 +234,9 @@ process MULTIQC_SANITISATION {
     BACKUP_HTML="\$REPORT_DIR/multiqc_report_original.html"
     OUTPUT_HTML="\$REPORT_DIR/multiqc_report.html"
 
-    cp "\$INPUT_HTML" "\$BACKUP_HTML"
+    if [ ! -f "\$BACKUP_HTML" ]; then
+        cp "\$INPUT_HTML" "\$BACKUP_HTML"
+    fi
 
     sed ${sed_string} "\$BACKUP_HTML" > "\$OUTPUT_HTML"
 
