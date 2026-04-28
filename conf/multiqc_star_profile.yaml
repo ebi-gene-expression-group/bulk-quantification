@@ -1,0 +1,6 @@
+custom_content:
+  star_profile:
+    section_name: "STAR Profile"
+    description: "STAR configuration used in this run"
+    plot_type: "table"
+    regex: "STAR_PROFILE_USED: name=(.+)"
