@@ -260,6 +260,8 @@ process RUN_RNASEQ {
         exit 1
     fi
 
+    echo "STAR_PROFILE_USED: $(basename ${star_config})"
+
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
