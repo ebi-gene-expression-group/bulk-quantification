@@ -188,35 +188,6 @@ process RUN_RNASEQ {
     """
 }
 
-// For cleanup
-process HANDLE_STATUS {
-
-    publishDir params.outdir, mode: 'copy'
-    
-    input:
-    val pipeline_status
-    
-    script:
-    """
-    echo "Cleaning up for: ${params.EXP_ID}"
-
-    if [ "${pipeline_status}" == "SUCCESS" ]
-        # Success flag for downstream logic / idempotency
-        echo "Creating ${params.EXP_ID}.rnaseq.done"
-        touch "${params.EXP_ID}.rnaseq.done"
-    else
-        # Mark failure
-        echo "Creating ${params.EXP_ID}.rnaseq.fail"
-        touch "${params.EXP_ID}.rnaseq.fail"
-        # Grab error from log, write to file
-        errOut=\$( echo "Unknown error" ) ### Command here to grab error ################
-        echo \$errOut >> ${nf_core_bulk_quantification}/excluded.txt
-    fi
-
-    """
-}
-
-
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     params_json_ch = GET_SPECIES(params.EXP_ID)
