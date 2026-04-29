@@ -165,6 +165,7 @@ process RUN_RNASEQ {
 
     output:
     path "${EXP_ID}.rnaseq.done"
+    path "star_profile.log"
 
     script:
     """
@@ -260,7 +261,7 @@ process RUN_RNASEQ {
         exit 1
     fi
 
-    echo "STAR_PROFILE_USED: \$(basename ${star_config})" > star_profile.log
+    echo "star_profile: star_yeast.config" > star_profile.log
 
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
