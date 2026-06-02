@@ -27,11 +27,11 @@ if (!nf_core_bulk_quantification) {
 }
 
 
-// Check that REFERENCES_PATH is defined in environment
+// Check that BULK_REFERENCES_DIR is defined in environment
 def referencePath = System.getenv('BULK_REFERENCES_DIR')
 if (!referencePath) {
     log.error "Environment variable BULK_REFERENCES_DIR is not set."
-    log.info  "Please set it, e.g.: export REFERENCES_PATH=/path/to/atlas"
+    log.info  "Please set it, e.g.: export BULK_REFERENCES_DIR=/path/to/references"
     System.exit(1)
 }
 
@@ -226,7 +226,7 @@ process MULTIQC_SANITISATION {
     def sed_cmds = []
     
     if (referencePath)
-        sed_cmds << "-e 's#${esc(referencePath)}#REFERENCES_PATH#g'"
+        sed_cmds << "-e 's#${esc(referencePath)}#BULK_REFERENCES_DIR#g'"
     
     if (nf_workdir)
         sed_cmds << "-e 's#${esc(nf_workdir)}#WORKDIR#g'"
