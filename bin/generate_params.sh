@@ -12,6 +12,37 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export EXP_ID=$1
 
+# Function to use atlas-config/atlas-species-name-mapping.yaml to map species names
+replace_species_name() {
+  local ref_yaml="$1"
+  local species="$2"
+
+  awk -v target="$species" '
+  BEGIN {
+    in_species=0
+  }
+
+  /^species:/ {
+    in_species=1
+    next
+  }
+
+  in_species && /^[[:space:]]+[a-zA-Z0-9_.-]+:/ {
+    gsub(":", "", $1)
+    key=$1
+    next
+  }
+
+  in_species && /^[[:space:]]*-[[:space:]]+/ {
+    val=$2
+    if (key == target) {
+      print val
+      exit
+    }
+  }
+  ' "$ref_yaml"
+}
+
 # Function to fetch species names from BioStudies API
 fetch_species_names() {
   local exp_id="$1"
@@ -53,9 +84,9 @@ fetch_species_names() {
 
 
 export SPECIES=$(fetch_species_names "${EXP_ID}")
-export SPECIES_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
-
-genome=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
+SP_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
+export SPECIES_lower=$(replace_species_name $ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml ${SP_lower})
+genome=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
   RELEASE="$ENSEMBL_RELEASE"
@@ -67,7 +98,6 @@ else
 fi
 
 export RELEASE
-                                      
-export ASSEMBLY=$(grep -i ${SPECIES} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
+export ASSEMBLY=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
 
 envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
