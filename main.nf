@@ -27,11 +27,19 @@ if (!nf_core_bulk_quantification) {
 }
 
 
-// Check that REFERENCES_PATH is defined in environment
+// Check that BULK_REFERENCES_DIR is defined in environment
 def referencePath = System.getenv('BULK_REFERENCES_DIR')
 if (!referencePath) {
     log.error "Environment variable BULK_REFERENCES_DIR is not set."
-    log.info  "Please set it, e.g.: export REFERENCES_PATH=/path/to/atlas"
+    log.info  "Please set it, e.g.: export BULK_REFERENCES_DIR=/path/to/references"
+    System.exit(1)
+}
+
+// Check that NF_WORKDIR is defined in environment
+def nf_workdir = System.getenv('NF_WORKDIR')
+if (!nf_workdir) {
+    log.error "Environment variable NF_WORKDIR is not set."
+    log.info  "Please set it, e.g.: export NF_WORKDIR=/path/to/workdir"
     System.exit(1)
 }
 
@@ -166,6 +174,7 @@ process RUN_RNASEQ {
     output:
     path "${EXP_ID}.rnaseq.done"
     path "star_profile.log"
+    path "multiqc/star_salmon/multiqc_report.html"
 
     script:
     """
@@ -296,46 +305,71 @@ process RUN_RNASEQ {
 # \\
 #    && nextflow clean -f
     
+    # Stage multiqc HTML into task work dir for downstream processes
+    MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
+    if [ ! -f "\$MULTIQC_HTML" ]; then
+        echo "ERROR: MultiQC report not found at \$MULTIQC_HTML" >&2
+        exit 1
+    fi
+    mkdir -p multiqc/star_salmon
+    cp "\$MULTIQC_HTML" multiqc/star_salmon/multiqc_report.html
+
     # Create done file only if workflow succeeded
     touch "${EXP_ID}.rnaseq.done"
     
     """
 }
 
-// For cleanup
-process HANDLE_STATUS {
+process MULTIQC_SANITISATION {
 
-    publishDir params.outdir, mode: 'copy'
-    
+    publishDir "${params.outdir}/multiqc/star_salmon", mode: 'copy', overwrite: true, pattern: "multiqc_report*.html"
+    publishDir params.outdir, mode: 'copy', pattern: "multiqc_sanitisation.done"
+
     input:
-    val pipeline_status
-    
+    path multiqc_html
+
+    output:
+    path "multiqc_report.html"
+    path "multiqc_report_original.html"
+    path "multiqc_sanitisation.done"
+
     script:
+    // Build sed expressions in Groovy
+    def esc = { it.toString().replaceAll(/([\\#&])/,'\\\\$1') }
+
+    def sed_cmds = []
+    
+    if (referencePath)
+        sed_cmds << "-e 's#${esc(referencePath)}#BULK_REFERENCES_DIR#g'"
+    
+    if (nf_workdir)
+        sed_cmds << "-e 's#${esc(nf_workdir)}#WORKDIR#g'"
+    
+    if (params.outdir)
+        sed_cmds << "-e 's#${esc(params.outdir)}#OUT_DIR#g'"
+    
+    if (workflow.projectDir)
+        sed_cmds << "-e 's#${esc(workflow.projectDir)}#GIT-REPO#g'"
+    
+    def sed_string = sed_cmds.join(' ')
+
     """
-    echo "Cleaning up for: ${params.EXP_ID}"
+    set -euo pipefail
 
-    if [ "${pipeline_status}" == "SUCCESS" ]
-        # Success flag for downstream logic / idempotency
-        echo "Creating ${params.EXP_ID}.rnaseq.done"
-        touch "${params.EXP_ID}.rnaseq.done"
-    else
-        # Mark failure
-        echo "Creating ${params.EXP_ID}.rnaseq.fail"
-        touch "${params.EXP_ID}.rnaseq.fail"
-        # Grab error from log, write to file
-        errOut=\$( echo "Unknown error" ) ### Command here to grab error ################
-        echo \$errOut >> ${nf_core_bulk_quantification}/excluded.txt
-    fi
+    cp "${multiqc_html}" multiqc_report_original.html
+    sed ${sed_string} multiqc_report_original.html > multiqc_report.html
 
+    touch multiqc_sanitisation.done
     """
 }
-
 
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     SET_PARAMS(params.EXP_ID)
     star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
-    RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, SET_PARAMS.out.params_json)
+    params_json_ch = GET_SPECIES(params.EXP_ID)
+    (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
+    MULTIQC_SANITISATION(multiqc_html)
 }
 
 workflow.onComplete {
