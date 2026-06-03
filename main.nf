@@ -370,7 +370,7 @@ workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     SET_PARAMS(params.EXP_ID)
     star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
-    params_json_ch = GET_SPECIES(params.EXP_ID)
+    params_json_ch = SET_PARAMS.out.params_json
     (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
     MULTIQC_SANITISATION(multiqc_html)
 }
