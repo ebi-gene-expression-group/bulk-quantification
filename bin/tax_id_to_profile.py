@@ -55,7 +55,7 @@ def classify_species(taxid):
 
 def main():
     parser = argparse.ArgumentParser(description="Classify a single TaxID")
-    parser.add_argument("taxid", help="NCBI TaxID (e.g. 3702)")
+    parser.add_argument("taxid", type=int, help="NCBI TaxID (e.g. 3702)")
     args = parser.parse_args()
 
     category = classify_species(args.taxid)
