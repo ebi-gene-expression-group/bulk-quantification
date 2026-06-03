@@ -29,10 +29,7 @@ dummy,${WORK_DIR}/dummy_R1.fq.gz,${WORK_DIR}/dummy_R2.fq.gz,auto
 EOF
 
 # Create minimal dummy fastq files (just for passing validation)
-echo "@read1" | gzip > ${WORK_DIR}/dummy_R1.fq.gz
-echo "ACGT" | gzip >> ${WORK_DIR}/dummy_R1.fq.gz
-echo "+" | gzip >> ${WORK_DIR}/dummy_R1.fq.gz
-echo "IIII" | gzip >> ${WORK_DIR}/dummy_R1.fq.gz
+printf '@read1\nACGT\n+\nIIII\n' | gzip > "${WORK_DIR}/dummy_R1.fq.gz"
 
 cp ${WORK_DIR}/dummy_R1.fq.gz ${WORK_DIR}/dummy_R2.fq.gz
 
