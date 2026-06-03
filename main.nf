@@ -79,7 +79,6 @@ def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
 results_dir.mkdirs()
 
 
-
 // -------------------- PROCESSES -------------------- //
 
 // include a process that checks goofys mount, mounts if non-existent
@@ -112,18 +111,52 @@ process GET_SAMPLES {
 }
 
 
-// Get species information
-process GET_SPECIES {
+// Set experiment specific parameters
+process SET_PARAMS {
 
     input:
         val EXP_ID
 
     output:
-        path "${EXP_ID}_params.json"
+        path "${EXP_ID}_params.json", emit: params_json
+        path "tax_id.txt",            emit: tax_id
 
     script:
     """
-    ${projectDir}/bin/generate_params.sh ${EXP_ID}
+    bash ${projectDir}/bin/generate_params.sh ${EXP_ID} > tax_id.txt
+    """
+}
+
+// Get species information
+process GET_STAR_PROFILE {
+
+    conda "${projectDir}/env/ete_env.yaml"
+
+    input:
+        path tax_id_file
+
+    output:
+        path "*.config"
+
+    script:
+    """
+    set -euo pipefail
+
+    TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
+
+    # Get STAR profile name from Python script; non-zero exit aborts the process
+    STAR_PROFILE=\$(python "${workflow.projectDir}/bin/tax_id_to_profile.py" "\${TAX_ID}" | tr -d '[:space:]')
+
+    STAR_CONFIG="${workflow.projectDir}/conf/star_\${STAR_PROFILE}.config"
+
+    echo "Using STAR profile: \$(basename "\${STAR_CONFIG}")"
+
+    if [[ ! -f "\${STAR_CONFIG}" ]]; then
+        echo "ERROR: STAR profile config not found: \${STAR_CONFIG}" >&2
+        exit 1
+    fi
+
+    cp "\${STAR_CONFIG}" .
     """
 }
 
@@ -135,10 +168,12 @@ process RUN_RNASEQ {
     input:
     path samplesheet
     val  EXP_ID
+    path star_config
     path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
     path "${EXP_ID}.rnaseq.done"
+    path "star_profile.log"
     path "multiqc/star_salmon/multiqc_report.html"
 
     script:
@@ -171,26 +206,108 @@ process RUN_RNASEQ {
         echo "FASTA index not found: \$GENOME_FASTA_INDEX (defaulting to BAI)"
     fi
 
+    if command -v jq &> /dev/null; then
+        RIBO_INDEX=\$(jq -r '.ribo_database_index // empty' "${params_json}")
+        RIBO_MANIFEST=\$(jq -r '.ribo_database_manifest // empty' "${params_json}")
+        CONTAM_INDEX=\$(jq -r '.contamination_index // empty' "${params_json}")
+    else
+        RIBO_INDEX=\$(grep -oP '"ribo_database_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        RIBO_MANIFEST=\$(grep -oP '"ribo_database_manifest"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+        CONTAM_INDEX=\$(grep -oP '"contamination_index"\\s*:\\s*"\\K[^"]+' "${params_json}" || true)
+    fi
+
+    if [[ -z "\${RIBO_INDEX}" ]]; then
+        echo "Missing required ribo_database_index in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${RIBO_MANIFEST}" ]]; then
+        echo "Missing required ribo_database_manifest in ${params_json}"
+        exit 1
+    fi
+
+    if [[ -z "\${CONTAM_INDEX}" ]]; then
+        echo "Missing required contamination_index in ${params_json}"
+        exit 1
+    fi
+    
+    # Check if ribo database index directory exists AND is not empty
+    if [ -d "\${RIBO_INDEX}" ] && [ "\$(ls -A "\${RIBO_INDEX}")" ]; then
+        echo "Using existing SortMeRNA index from: \${RIBO_INDEX}"
+    else
+        echo "SortMeRNA index not found. Create a new index..."
+        exit 1
+    fi
+
+    if [ -f "\${RIBO_MANIFEST}" ]; then
+        echo "Using existing SortMeRNA manifest from: \${RIBO_MANIFEST}"
+        cat \${RIBO_MANIFEST}
+        missing=0
+        while IFS= read -r f; do
+            [[ -z "\$f" ]] && continue
+            if [[ ! -e "\$f" ]]; then
+                echo "Missing: \$f"
+                missing=1
+            fi
+        done < "\${RIBO_MANIFEST}"
+    
+        if [[ \$missing -eq 0 ]]; then
+            echo "All files exist."
+        else
+            echo "Some files missing and sortmerna likely to fail, exiting..."
+            exit 1
+        fi
+    else
+        echo "SortMeRNA manifest not found. Create a new manifest..."
+        exit 1
+    fi
+
+    # Check if contamination index directory exists AND is not empty
+    if [ -d "\${CONTAM_INDEX}" ] && [ "\$(ls -A "\${CONTAM_INDEX}")" ]; then
+        echo "Using existing contamination index from: \${CONTAM_INDEX}"
+    else
+        echo "Contamination index directory not found or empty: \${CONTAM_INDEX}"
+        exit 1
+    fi
+
+    STAR_PROFILE_USED="$(basename "${star_config}")"
+    mkdir -p "${params.outdir}"
+    printf 'STAR_PROFILE_USED\t%s\n' "${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
+    cp "${params.outdir}/star_profile.log" star_profile.log
+
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
+        -c "${star_config}" \\
         -profile singularity \\
         \$BAM_INDEX \\
+        --contaminant_screening kraken2_bracken \\
+        --kraken_db "\${CONTAM_INDEX}" \\
         --without-wave \\
-        --skip_fastqc  \\
-        --skip_rseqc  \\
+        --save_unaligned \\
+        --skip_bbsplit \\
+        --skip_fastqc \\
+        --skip_rseqc \\
         --skip_qualimap \\
         --skip_dupradar \\
         --skip_preseq \\
         --skip_biotype_qc \\
-        --skip_kraken2 \\
         --skip_stringtie \\
         --skip_deseq2_qc \\
         --skip_markduplicates \\
         --skip_bigwig \\
+        --remove_ribo_rna \\
+        --ribo_removal_tool sortmerna \\
+        --ribo_database_manifest "\${RIBO_MANIFEST}" \\
+        --sortmerna_index "\${RIBO_INDEX}" \\
+        --multiqc_config ${workflow.projectDir}/conf/multiqc_star_profile.yaml \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
-    && nextflow clean -f
+        -with-tower \\
+        -name "nf_core_rnaseq_${EXP_ID}"
 
+# \\
+#    && nextflow clean -f
+    
     # Stage multiqc HTML into task work dir for downstream processes
     MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
     if [ ! -f "\$MULTIQC_HTML" ]; then
@@ -251,8 +368,10 @@ process MULTIQC_SANITISATION {
 
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
-    params_json_ch = GET_SPECIES(params.EXP_ID)
-    (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, params_json_ch)
+    SET_PARAMS(params.EXP_ID)
+    star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
+    params_json_ch = SET_PARAMS.out.params_json
+    (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
     MULTIQC_SANITISATION(multiqc_html)
 }
 
@@ -273,4 +392,3 @@ workflow.onComplete {
         excluded << "${params.EXP_ID}\t${failureFile}\n"
     }
 }
-

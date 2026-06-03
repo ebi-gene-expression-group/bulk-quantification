@@ -50,7 +50,6 @@ fetch_species_names() {
   local species_list no
   local exp_type=$(echo "${exp_id#E-}" | sed 's/-.*//')
 
-  if [[ "$exp_type" == "GEOD" || "$exp_type" == "CURD" ]]; then
     species_list="$(
       awk -F'\t' '
         NR==1 {
@@ -63,13 +62,7 @@ fetch_species_names() {
       | sort -u \
       | sed 's/ /_/g'
     )"
-  else
-    species_list=$(curl -fsS "$BIOSTUDIES_URL" \
-      | tr -d '\r' \
-      | awk '/"name"[[:space:]]*:[[:space:]]*"Organism"/{p=1;next} p&&/"value"/{p=0; sub(/.*"value"[[:space:]]*:[[:space:]]*"/,""); sub(/".*/,""); print}' \
-      | sort -u | sed 's/ /_/g' || true)
-    
-  fi
+  
 
   no="$(printf '%s\n' "${species_list}" | grep -c . || true)"
 
@@ -84,16 +77,25 @@ fetch_species_names() {
 
 
 export SPECIES=$(fetch_species_names "${EXP_ID}")
+
 SP_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
-export SPECIES_lower=$(replace_species_name $ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml ${SP_lower})
+SPECIES_lower=$(replace_species_name "$ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml" "$SP_lower")
+if [[ -z "$SPECIES_lower" ]]; then
+  echo "WARN: species '$SP_lower' not found in mapping file, using original value" >&2
+  SPECIES_lower="$SP_lower"
+fi
+export SPECIES_lower
+
 genome=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
+tax_id=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $2}')
+
 RELEASE=""
 if [[ "$genome" == "ensembl" ]]; then
   RELEASE="$ENSEMBL_RELEASE"
 elif [[ "$genome" == "ensemblgenomes" ]]; then
   RELEASE="$ENSEMBL_GENOME_RELEASE"
 else
-  echo "$genome is not ensembl or ensemblgenomes"
+  echo "$genome is not ensembl or ensemblgenomes" >&2
   exit 1
 fi
 
@@ -101,3 +103,5 @@ export RELEASE
 export ASSEMBLY=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
 
 envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
+
+echo $tax_id

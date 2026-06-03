@@ -8,5 +8,8 @@
   "transcript_fasta": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/TranscriptFasta/genome.transcripts.fa",
   "star_ignore_sjdbgtf": true,
   "skip_pseudo_alignment": true,
-  "without_wave": true
+  "without_wave": true,
+  "contamination_index": "${BULK_REFERENCES_DIR}/contamination/kraken2/kraken2_standard8",
+  "ribo_database_manifest": "${BULK_REFERENCES_DIR}/contamination/ribo/silva.manifest.tsv",
+  "ribo_database_index": "${BULK_REFERENCES_DIR}/contamination/ribo/silva/sortmerna"
 }
