@@ -79,7 +79,12 @@ fetch_species_names() {
 export SPECIES=$(fetch_species_names "${EXP_ID}")
 
 SP_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
-export SPECIES_lower=$(replace_species_name $ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml ${SP_lower})
+SPECIES_lower=$(replace_species_name "$ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml" "$SP_lower")
+if [[ -z "$SPECIES_lower" ]]; then
+  echo "WARN: species '$SP_lower' not found in mapping file, using original value" >&2
+  SPECIES_lower="$SP_lower"
+fi
+export SPECIES_lower
 
 genome=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
 tax_id=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $2}')
