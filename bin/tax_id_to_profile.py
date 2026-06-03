@@ -32,10 +32,10 @@ except Exception as e:
 
 # Reference taxids
 GROUPS = {
-    "bryophytes_plants": {3208, 3195, 3209},
+    "bryophytes_plants": {3208},
     "monocot_plants": {4447},
-    "dicot_plants": {71240, 91827, 91835},
-    "yeast": {4895, 4894, 4890, 4930},
+    "dicot_plants": {71240, 232347},
+    "yeast": {4890},
     "protist": {554915, 33630, 33634, 543769}
 }
 
