@@ -270,7 +270,10 @@ process RUN_RNASEQ {
         exit 1
     fi
 
-    echo "star_profile: star_yeast.config" > star_profile.log
+    STAR_PROFILE_USED="$(basename "${star_config}")"
+    mkdir -p "${params.outdir}"
+    printf 'STAR_PROFILE_USED\t%s\n' "${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
+    cp "${params.outdir}/star_profile.log" star_profile.log
 
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
