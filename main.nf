@@ -275,6 +275,11 @@ process RUN_RNASEQ {
     printf 'STAR_PROFILE_USED\t%s\n' "${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
     cp "${params.outdir}/star_profile.log" star_profile.log
 
+    if [ ! -f "${workflow.projectDir}/subworkflows/rnaseq/main.nf" ]; then
+        echo "ERROR: rnaseq subworkflow not found at ${workflow.projectDir}/subworkflows/rnaseq/main.nf. Did you run 'git submodule update --init --recursive'?" >&2
+        exit 1
+    fi
+
     nextflow run ${workflow.projectDir}/subworkflows/rnaseq/main.nf \\
         -params-file "${params_json}" \\
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
