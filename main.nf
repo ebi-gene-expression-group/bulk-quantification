@@ -270,9 +270,9 @@ process RUN_RNASEQ {
         exit 1
     fi
 
-    STAR_PROFILE_USED="$(basename "${star_config}")"
+    STAR_PROFILE_USED="\$(basename "${star_config}")"
     mkdir -p "${params.outdir}"
-    printf 'STAR_PROFILE_USED\t%s\n' "${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
+    printf 'STAR_PROFILE_USED\t%s\n' "\${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
     cp "${params.outdir}/star_profile.log" star_profile.log
 
     if [ ! -f "${workflow.projectDir}/subworkflows/rnaseq/main.nf" ]; then
