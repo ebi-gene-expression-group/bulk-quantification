@@ -116,7 +116,7 @@ for library in $( get_ids_from_input $accession $fileIds ); do
     fileCount=$(echo "${libraryFiles}" | wc -l)
     echo "fileCount $fileCount"
     if [ ! -s "$fileSamples" ]; then
-        if [ "$fileCount" -eq 1 || "$fileCount" -eq 2 ]; then
+        if [[ "$fileCount" -eq 1 || "$fileCount" -eq 2 ]]; then
             echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
         else
             echo "Error: Expected exactly 1 or 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
