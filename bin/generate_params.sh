@@ -101,7 +101,7 @@ fi
 
 export RELEASE
 export ASSEMBLY=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
-
+export SPECIES=$SPECIES_lower
 envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
 
 echo $tax_id
