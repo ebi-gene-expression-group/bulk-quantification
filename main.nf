@@ -309,7 +309,11 @@ process RUN_RNASEQ {
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
-    && nextflow clean -f
+
+    run_status=$?
+    if [[ $run_status -eq 0 ]]; then
+        nextflow clean -f
+    fi
     
     # Stage multiqc HTML into task work dir for downstream processes
     MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
