@@ -43,6 +43,27 @@ replace_species_name() {
   ' "$ref_yaml"
 }
 
+match_case() {
+    local original="$1"
+    local mapped="$2"
+
+    IFS='_' read -ra orig_parts <<< "$original"
+    IFS='_' read -ra map_parts <<< "$mapped"
+
+    local result=()
+
+    for i in "${!map_parts[@]}"; do
+        if [[ "${orig_parts[$i]}" =~ ^[A-Z] ]]; then
+            result+=("$(tr '[:lower:]' '[:upper:]' <<< "${map_parts[$i]:0:1}")${map_parts[$i]:1}")
+        else
+            result+=("${map_parts[$i]}")
+        fi
+    done
+
+    IFS='_'
+    echo "${result[*]}"
+}
+
 # Function to fetch species names from BioStudies API
 fetch_species_names() {
   local exp_id="$1"
@@ -76,14 +97,17 @@ fetch_species_names() {
 }
 
 
-export SPECIES=$(fetch_species_names "${EXP_ID}")
+SPECIES=$(fetch_species_names "${EXP_ID}")
 
 SP_lower="$(tr '[:upper:]' '[:lower:]' <<<"$SPECIES")"
 SPECIES_lower=$(replace_species_name "$ATLAS_PROD/configs/atlas-config/prod/atlas-species-name-mapping.yaml" "$SP_lower")
 if [[ -z "$SPECIES_lower" ]]; then
   echo "WARN: species '$SP_lower' not found in mapping file, using original value" >&2
   SPECIES_lower="$SP_lower"
+else
+  SPECIES=$(match_case "$SPECIES" "$SPECIES_lower")
 fi
+export SPECIES
 export SPECIES_lower
 
 genome=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $3}')
@@ -101,7 +125,7 @@ fi
 
 export RELEASE
 export ASSEMBLY=$(grep -i ${SPECIES_lower} $SCRIPT_DIR/../../bulk-references/genome_reference.conf | awk '{print $7}')
-export SPECIES=$SPECIES_lower
+
 envsubst < "$SCRIPT_DIR/../params.template.json" > "${EXP_ID}_params.json"
 
 echo $tax_id
