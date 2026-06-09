@@ -310,8 +310,8 @@ process RUN_RNASEQ {
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}"
 
-    run_status=$?
-    if [[ $run_status -eq 0 ]]; then
+    run_status=\$?
+    if [[ \$run_status -eq 0 ]]; then
         nextflow clean -f
     fi
     
