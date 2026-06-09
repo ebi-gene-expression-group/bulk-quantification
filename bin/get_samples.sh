@@ -116,18 +116,18 @@ for library in $( get_ids_from_input $accession $fileIds ); do
     fileCount=$(echo "${libraryFiles}" | wc -l)
     echo "fileCount $fileCount"
     if [ ! -s "$fileSamples" ]; then
-        if [ "$fileCount" -eq 1 ]; then
-            echo "sample,fastq_1,strandedness" > "$fileSamples"
-        elif [ "$fileCount" -eq 2 ]; then
+        if [ "$fileCount" -eq 1 || "$fileCount" -eq 2 ]; then
             echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
         else
-            echo "Error: Expected exactly 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
+            echo "Error: Expected exactly 1 or 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
             exit 1
         fi
     fi
     
     # Join the two file paths into a comma-separated list
     libraryFiles=$(echo "${libraryFiles}" | paste -sd "," -)
+
+    [[ "$libraryFiles" != *,* ]] && libraryFiles="${libraryFiles},"
     
     echo "${library},${libraryFiles},auto" >> $fileSamples
 done
