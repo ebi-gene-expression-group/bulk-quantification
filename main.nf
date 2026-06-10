@@ -75,7 +75,7 @@ if (!era_public_s3_path) {
 
 // Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
-def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
+def results_dir = file(params.outdir)
 results_dir.mkdirs()
 
 
