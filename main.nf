@@ -130,7 +130,7 @@ process SET_PARAMS {
 // Get species information
 process GET_STAR_PROFILE {
 
-    container "quay.io/ebigxa/ete3:v1.0"
+    container "quay.io/ebigxa/ete3:v2.0"
 
     containerOptions = "--bind ${referencePath}:${referencePath}"
 
