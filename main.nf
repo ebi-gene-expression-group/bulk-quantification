@@ -130,7 +130,9 @@ process SET_PARAMS {
 // Get species information
 process GET_STAR_PROFILE {
 
-    conda "${projectDir}/env/ete_env.yaml"
+    container "quay.io/ebigxa/ete3:v1.0"
+
+    containerOptions = "--bind ${referencePath}:${referencePath}"
 
     input:
         path tax_id_file
@@ -141,6 +143,13 @@ process GET_STAR_PROFILE {
     script:
     """
     set -euo pipefail
+
+    ########## TESTS ##########
+    echo "BELOW ARE MOUNTED PATH TESTS"
+    ls -l "${referencePath}/taxonomy/taxa.sqlite"
+    ls -l "${workflow.projectDir}" | head
+    echo "MOUNTED PATH TESTS DONE"
+    ########## TESTS ##########
 
     TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
 
