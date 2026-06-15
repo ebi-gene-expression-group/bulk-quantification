@@ -144,12 +144,6 @@ process GET_STAR_PROFILE {
     """
     set -euo pipefail
 
-    ########## TESTS ##########
-    echo "Testing: BULK_REFERENCES_DIR=\$BULK_REFERENCES_DIR"
-    ls -ld "\$BULK_REFERENCES_DIR"
-    echo "Done testing."
-    ########## TESTS ##########
-
     TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
 
     # Get STAR profile name from Python script; non-zero exit aborts the process
