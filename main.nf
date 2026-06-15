@@ -146,7 +146,7 @@ process GET_STAR_PROFILE {
 
     ########## TESTS ##########
     echo "Testing: BULK_REFERENCES_DIR=\$BULK_REFERENCES_DIR"
-    ls -ld \$BULK_REFERENCES_DIR"
+    ls -ld "\$BULK_REFERENCES_DIR"
     echo "Done testing."
     ########## TESTS ##########
 
