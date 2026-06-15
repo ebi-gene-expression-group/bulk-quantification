@@ -145,10 +145,9 @@ process GET_STAR_PROFILE {
     set -euo pipefail
 
     ########## TESTS ##########
-    echo "BELOW ARE MOUNTED PATH TESTS"
-    ls -l "${referencePath}/taxonomy/taxa.sqlite"
-    ls -l "${workflow.projectDir}" | head
-    echo "MOUNTED PATH TESTS DONE"
+    echo "Testing: BULK_REFERENCES_DIR=\$BULK_REFERENCES_DIR"
+    ls -ld \$BULK_REFERENCES_DIR"
+    echo "Done testing."
     ########## TESTS ##########
 
     TAX_ID=\$(cat "${tax_id_file}" | tr -d '[:space:]')
