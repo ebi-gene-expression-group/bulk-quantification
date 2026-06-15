@@ -132,7 +132,7 @@ process GET_STAR_PROFILE {
 
     container "quay.io/ebigxa/ete3:v2.0"
 
-    containerOptions = "--bind ${referencePath}:${referencePath}"
+    containerOptions = "--env BULK_REFERENCES_DIR=${referencePath} --bind ${referencePath}:${referencePath}"
 
     input:
         path tax_id_file
