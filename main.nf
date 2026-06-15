@@ -75,7 +75,7 @@ if (!era_public_s3_path) {
 
 // Define output directory based on EXP_ID
 params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
-def results_dir = file("${nf_core_bulk_quantification}/${params.EXP_ID}")
+def results_dir = file(params.outdir)
 results_dir.mkdirs()
 
 
@@ -130,7 +130,9 @@ process SET_PARAMS {
 // Get species information
 process GET_STAR_PROFILE {
 
-    conda "${projectDir}/env/ete_env.yaml"
+    container "quay.io/ebigxa/ete3:v2.0"
+
+    containerOptions = "--env BULK_REFERENCES_DIR=${referencePath} --bind ${referencePath}:${referencePath}"
 
     input:
         path tax_id_file
