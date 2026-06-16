@@ -4,6 +4,8 @@
 # Either provide a file listing run IDs <ids.csv>, or state that input is from atlas.
 # The IDs csv file is a single-column list of ENA run IDs, the same input file required by https://nf-co.re/fetchngs/1.12.0/
 
+# WARNING: This version currently only works for `-x atlas`
+
 usage() { echo """
 Usage: 
 $0 [ -a <accession_id> ] [ -x atlas ] [ -s <samplesheet.csv> ] [ -e <endpoint_url> ] [ -m <era_public_mount_path or era_public_s3_path>] [ -c fastq_copy_path ]
@@ -102,20 +104,20 @@ for library in $( get_ids_from_input $accession $fileIds ); do
     # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
     aws --no-sign-request --endpoint-url "${endpointUrl}" s3 cp "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --recursive
 
-    # First look for paired-end files
+    # First, look for paired-end files
     pairedFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
-      -name "${library}_[12].f*q.gz")
+      -name "${library}_[12].f*q.gz" | sort)
     
-    if [[ -n "$pairedFiles" ]]; then
-      libraryFiles="$pairedFiles"
+    if [[ -n "${pairedFiles}" ]]; then
+      libraryFiles="${pairedFiles}"
     else
       libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
         -name "${library}.f*q.gz")
     fi
 
     fileCount=$(echo "${libraryFiles}" | wc -l)
-    echo "fileCount $fileCount"
-    if [ ! -s "$fileSamples" ]; then
+    echo "ENA library ${library} file count: ${fileCount}"
+    if [ ! -s "${fileSamples}" ]; then
         if [[ "$fileCount" -eq 1 || "$fileCount" -eq 2 ]]; then
             echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
         else
