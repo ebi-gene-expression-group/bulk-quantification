@@ -33,13 +33,23 @@ while getopts ":a:x:s:e:m:c:" o; do
         c)
             c=${OPTARG}
             ;;
+
+        :)  echo "ERROR: Option -$OPTARG requires an argument." >&2
+            usage
+            ;;
+
+        \?) echo "ERROR: Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    
     esac
 done
+
 shift $((OPTIND-1))
 
 # Assign and re-assign variables for readability, 
-
 if [ -z "${a}" ] || [ -z "${x}" ] || [ -z "${s}" ] || [ -z "${e}" ] || [ -z "${m}" ]; then
+    echo "ERROR: Missing argument(s)." >&2
     usage
     exit 1
 fi
@@ -83,53 +93,85 @@ get_library_subdir() {
 get_ids_from_input () {
     local accession=$1
     local fileIds=$2
-    if [ $fileIds == 'atlas' ]; then
-        fileConfigXml=$(ls ${ATLAS_PROD}/analysis/*/rna-seq/experiments/${accession}/${accession}-configuration.xml)
-        libraries=$( grep "</assay>" "${fileConfigXml}" | sed -n 's/.*<assay[^>]*>\(.*\)<\/assay>.*/\1/p' | sort -u )
+    local fileConfigXml
+    local libraries
+
+    if [[ $fileIds == atlas ]]; then
+        shopt -s nullglob
+        local matches=( "${ATLAS_PROD}/analysis/"*/rna-seq/experiments/"${accession}/${accession}-configuration.xml" )
+
+        if (( ${#matches[@]} != 1 )); then
+            echo "ERROR: expected exactly one config XML for ${accession}, found ${#matches[@]}" >&2
+            exit 1
+        fi
+
+        fileConfigXml=${matches[0]}
+
+        libraries=$(
+            grep '</assay>' "$fileConfigXml" |
+            sed -n 's/.*<assay[^>]*>\(.*\)<\/assay>.*/\1/p' |
+            sort -u
+        )
     else
-        libraries=$( cat $fileIds )
+        libraries=$(<"$fileIds")
     fi
-    echo "${libraries}"
+
+    printf '%s\n' "$libraries"
 }
 
 # Main
-for library in $( get_ids_from_input $accession $fileIds ); do
-    echo "library id to be downloaded $library"
-    librarySubdir=$(get_library_subdir "$library")
-    echo "library subdir $librarySubdir"
-    libraryCopyPath="${copyFastqPath}/${accession}"
-    echo "library CopyPath $libraryCopyPath"
-    mkdir -p $libraryCopyPath
+while IFS= read -r library; do
+    echo "Library ID to be downloaded: ${library}"
 
-    # Copy subdirectory, without prior knowledge of how many files are inside; should proceed whether or not libraryCopyPath has been created or not 
+    librarySubdir=$(get_library_subdir "$library")
+    echo "Library subdir: ${librarySubdir}"
+
+    libraryCopyPath="${copyFastqPath}/${accession}"
+    echo "Library copy path: ${libraryCopyPath}"
+    mkdir -p "$libraryCopyPath"
+
+    # List files to download, ordered by filename
+    expectedFiles=$( aws --no-sign-request --endpoint-url "${endpointUrl}" s3 ls "${eraPubPath}/${librarySubdir}/" | awk '{  print $4 }' | sort )
+    fileCount=$( echo "${expectedFiles}" | wc -w )
+
+    # Exit if there are more than 2 files in ENA
+    if (( fileCount != 1 && fileCount != 2 )); then
+        echo "ERROR: Expected exactly 1 or 2 FASTQ files in ENA, but found ${fileCount}."
+        echo "       Files: ${expectedFiles}"
+        exit 1
+    fi
+
+    # Download files
     aws --no-sign-request --endpoint-url "${endpointUrl}" s3 cp "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --recursive
 
-    # First, look for paired-end files
-    pairedFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
-      -name "${library}_[12].f*q.gz" | sort)
-    
-    if [[ -n "${pairedFiles}" ]]; then
-      libraryFiles="${pairedFiles}"
-    else
-      libraryFiles=$(find "${libraryCopyPath}" -maxdepth 1 -type f \
-        -name "${library}.f*q.gz")
-    fi
-
-    fileCount=$(echo "${libraryFiles}" | wc -l)
-    echo "ENA library ${library} file count: ${fileCount}"
-    if [ ! -s "${fileSamples}" ]; then
-        if [[ "$fileCount" -eq 1 || "$fileCount" -eq 2 ]]; then
-            echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
-        else
-            echo "Error: Expected exactly 1 or 2 FASTQ files in ${libraryCopyPath}, but found ${fileCount}."
-            exit 1
+    # Check if all expected files were copied
+    # To include in the future: md5sum validation (but this will need checking the ENA db)
+    dlExit=false
+    dlFiles=""
+    for libFile in $expectedFiles; do
+        dlFiles+="${libraryCopyPath}/${libFile} "
+        if [ ! -s "${libraryCopyPath}/${libFile}" ]; then
+            echo "ERROR: File not downloaded properly: ${libFile}"
+            dlExit=true
         fi
-    fi
-    
-    # Join the two file paths into a comma-separated list
-    libraryFiles=$(echo "${libraryFiles}" | paste -sd "," -)
+    done
 
-    [[ "$libraryFiles" != *,* ]] && libraryFiles="${libraryFiles},"
-    
+    # Exit with error if not all files were downloaded successfully
+    if $dlExit; then
+        echo "Exiting because not all files were downloaded properly for ${library}."
+        exit 1
+    fi
+
+    # Write entry in the samplesheet
+    if [ ! -s "$fileSamples" ]; then
+        echo "sample,fastq_1,fastq_2,strandedness" > "$fileSamples"
+    fi
+        
+    # Join the file path/s into a comma-separated list
+    libraryFiles=$(echo $dlFiles | sed 's/\s\+/,/g')
+    if [[ $fileCount -eq 1 ]]; then
+        libraryFiles="${libraryFiles},"
+    fi
     echo "${library},${libraryFiles},auto" >> $fileSamples
-done
+
+done < <(get_ids_from_input "$accession" "$fileIds")
