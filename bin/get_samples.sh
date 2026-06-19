@@ -142,7 +142,7 @@ while IFS= read -r library; do
     fi
 
     # Download files
-    aws --no-sign-request --endpoint-url "${endpointUrl}" s3 cp "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --recursive
+    aws --no-sign-request --endpoint-url "${endpointUrl}" s3 sync "${eraPubPath}/${librarySubdir}" "${libraryCopyPath}" --no-progress
 
     # Check if all expected files were copied
     # To include in the future: md5sum validation (but this will need checking the ENA db)
