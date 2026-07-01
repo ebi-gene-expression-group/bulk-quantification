@@ -293,6 +293,7 @@ process RUN_RNASEQ {
         --without-wave \\
         --save_unaligned \\
         --skip_bbsplit \\
+        --skip_pseudo_alignment \\
         --skip_fastqc \\
         --skip_rseqc \\
         --skip_qualimap \\
