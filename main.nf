@@ -375,6 +375,27 @@ process MULTIQC_SANITISATION {
     """
 }
 
+process CLEAN_FASTQS {
+
+    publishDir params.outdir, mode: 'copy'
+
+    input:
+    path samplesheet
+    path rnaseq_done
+
+    output:
+    path "fastq_cleanup.done"
+
+    script:
+    """
+    awk -F, 'NR>1 {print \$2; if (\$3 != "") print \$3}' ${samplesheet} \
+        | sort -u \
+        | xargs -r rm -f
+
+    touch fastq_cleanup.done
+    """
+}
+
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
     SET_PARAMS(params.EXP_ID)
@@ -382,6 +403,7 @@ workflow {
     params_json_ch = SET_PARAMS.out.params_json
     (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
     MULTIQC_SANITISATION(multiqc_html)
+    CLEAN_FASTQS(samplesheet, rnaseq_done)
 }
 
 workflow.onComplete {
