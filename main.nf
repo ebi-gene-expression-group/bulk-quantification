@@ -412,6 +412,13 @@ workflow.onComplete {
 
     if (workflow.success) {
         log.info "Pipeline completed successfully!"
+
+        def workDir = workflow.workDir
+        if (workDir) {
+            log.info "Removing work directory: ${workDir}"
+            workDir.deleteDir()
+        }
+
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
         def err_report = workflow.errorReport?.toString()
