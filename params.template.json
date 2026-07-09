@@ -11,5 +11,5 @@
   "without_wave": true,
   "contamination_index": "${BULK_REFERENCES_DIR}/contamination/kraken2/kraken2_standard8",
   "ribo_database_manifest": "${BULK_REFERENCES_DIR}/contamination/ribo/silva.manifest.tsv",
-  "ribo_database_index": "${BULK_REFERENCES_DIR}/contamination/ribo/silva/sortmerna"
+  "ribo_database_index": "${BULK_REFERENCES_DIR}/contamination/ribo/silva/sortmerna_bak"
 }
