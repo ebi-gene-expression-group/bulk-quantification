@@ -10,7 +10,7 @@ if (!params.EXP_ID) {
     System.exit(1)
 }
 
-def EXP_ID_PATTERN = /^E-[A-Z0-9]+-[0-9]+$/
+def EXP_ID_PATTERN = /^E-[A-Z]+-[0-9]+$/
 if (!(params.EXP_ID ==~ EXP_ID_PATTERN)) {
     log.error "Invalid EXP_ID: ${params.EXP_ID}"
     log.info  "EXP_ID must match E-<source>-<digits>, for example E-MTAB-1234."
