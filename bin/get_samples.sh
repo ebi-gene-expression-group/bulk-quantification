@@ -90,6 +90,16 @@ get_library_subdir() {
     echo "${subDir}/${prefix}${library}"
 }
 
+validate_assay_id() {
+    local assay_id=$1
+
+    if [[ ! "$assay_id" =~ ^([DES]RR[0-9]+|ENC[A-Za-z0-9_.-]+)$ ]]; then
+        echo "ERROR: Unsafe or unsupported assay ID: ${assay_id}" >&2
+        echo "       Expected an ERR/SRR/DRR run accession or an ENCODE identifier starting with ENC." >&2
+        exit 1
+    fi
+}
+
 get_ids_from_input () {
     local accession=$1
     local fileIds=$2
@@ -121,6 +131,8 @@ get_ids_from_input () {
 
 # Main
 while IFS= read -r library; do
+    validate_assay_id "$library"
+
     echo "Library ID to be downloaded: ${library}"
 
     librarySubdir=$(get_library_subdir "$library")
@@ -168,10 +180,10 @@ while IFS= read -r library; do
     fi
         
     # Join the file path/s into a comma-separated list
-    libraryFiles=$(echo $dlFiles | sed 's/\s\+/,/g')
+    libraryFiles=$(printf '%s' "$dlFiles" | sed 's/\s\+/,/g')
     if [[ $fileCount -eq 1 ]]; then
         libraryFiles="${libraryFiles},"
     fi
-    echo "${library},${libraryFiles},auto" >> $fileSamples
+    echo "${library},${libraryFiles},auto" >> "$fileSamples"
 
 done < <(get_ids_from_input "$accession" "$fileIds")
