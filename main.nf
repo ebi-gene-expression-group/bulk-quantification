@@ -417,7 +417,7 @@ workflow.onComplete {
         // if (workDir) {
         //     log.info "Removing work directory: ${workDir}"
         //     workDir.deleteDir()
-        }
+        // }
 
     } else {
         log.info "Pipeline failed with exit status: ${workflow.exitStatus}"
