@@ -78,6 +78,9 @@ params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 def results_dir = file(params.outdir)
 results_dir.mkdirs()
 
+// Resume process RUN_RNASEQ?
+def resumeOpt = System.getenv('RESUME_RNASEQ') ?: ""
+
 
 // -------------------- PROCESSES -------------------- //
 
@@ -311,7 +314,8 @@ process RUN_RNASEQ {
         --multiqc_config ${workflow.projectDir}/conf/multiqc_star_profile.yaml \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
-        -name "nf_core_rnaseq_${EXP_ID}"
+        -name "nf_core_rnaseq_${EXP_ID}" \\
+        ${resumeOpt}
 
     run_status=\$?
     if [[ \$run_status -eq 0 ]]; then
