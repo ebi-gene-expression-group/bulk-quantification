@@ -317,10 +317,7 @@ process RUN_RNASEQ {
         -name "nf_core_rnaseq_${EXP_ID}" \\
         ${resumeOpt}
 
-    run_status=\$?
-    if [[ \$run_status -eq 0 ]]; then
-        nextflow clean -f
-    fi
+    nextflow clean -f
     
     # Stage multiqc HTML into task work dir for downstream processes
     MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
