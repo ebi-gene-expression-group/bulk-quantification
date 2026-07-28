@@ -131,14 +131,30 @@ while IFS= read -r library; do
     mkdir -p "$libraryCopyPath"
 
     # List files to download, ordered by filename
-    expectedFiles=$( aws --no-sign-request --endpoint-url "${endpointUrl}" s3 ls "${eraPubPath}/${librarySubdir}/" | awk '{  print $4 }' | sort )
-    fileCount=$( echo "${expectedFiles}" | wc -w )
+    mapfile -t expectedFiles < <(
+        aws --no-sign-request \
+            --endpoint-url "${endpointUrl}" \
+            s3 ls "${eraPubPath}/${librarySubdir}/" |
+        awk '{print $4}' |
+        sort
+    )
 
-    # Exit if there are more than 2 files in ENA
-    if (( fileCount != 1 && fileCount != 2 )); then
-        echo "ERROR: Expected exactly 1 or 2 FASTQ files in ENA, but found ${fileCount}."
-        echo "       Files: ${expectedFiles}"
+    fileCount=${#expectedFiles[@]}
+
+    # Check number of raw fastq files
+    if (( fileCount == 0 )); then
+        echo "ERROR: Exiting because there are no files to download for ${library}."
         exit 1
+    elif (( fileCount > 2 )); then
+        echo "WARNING: Expected exactly 1 or 2 FASTQ files in ENA, but found ${fileCount}."
+        echo "       Files: ${expectedFiles}"
+        # Removing files that don't look like they're paired-end
+        filtered=()
+        for f in "${expectedFiles[@]}"; do
+            [[ $f == "${library}"_[12].fastq.gz ]] && filtered+=("$f")
+        done
+        expectedFiles=("${filtered[@]}")
+        fileCount=${#expectedFiles[@]}
     fi
 
     # Download files
@@ -148,17 +164,17 @@ while IFS= read -r library; do
     # To include in the future: md5sum validation (but this will need checking the ENA db)
     dlExit=false
     dlFiles=""
-    for libFile in $expectedFiles; do
-        dlFiles+="${libraryCopyPath}/${libFile} "
+    for libFile in "${expectedFiles[@]}"; do
         if [ ! -s "${libraryCopyPath}/${libFile}" ]; then
             echo "ERROR: File not downloaded properly: ${libFile}"
             dlExit=true
         fi
+        dlFiles+="${libraryCopyPath}/${libFile} "
     done
 
     # Exit with error if not all files were downloaded successfully
     if $dlExit; then
-        echo "Exiting because not all files were downloaded properly for ${library}."
+        echo "ERROR: Exiting because not all files were downloaded properly for ${library}."
         exit 1
     fi
 
@@ -172,6 +188,6 @@ while IFS= read -r library; do
     if [[ $fileCount -eq 1 ]]; then
         libraryFiles="${libraryFiles},"
     fi
-    echo "${library},${libraryFiles},auto" >> $fileSamples
+    echo "${library},${libraryFiles},auto" >> "$fileSamples"
 
 done < <(get_ids_from_input "$accession" "$fileIds")
