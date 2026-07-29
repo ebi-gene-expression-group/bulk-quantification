@@ -108,8 +108,7 @@ get_ids_from_input () {
         fileConfigXml=${matches[0]}
 
         libraries=$(
-            grep '</assay>' "$fileConfigXml" |
-            sed -n 's/.*<assay[^>]*>\(.*\)<\/assay>.*/\1/p' |
+            sed -n 's/^[[:space:]]*<assay>\(.*\)<\/assay>[[:space:]]*$/\1/p' "$fileConfigXml" |
             sort -u
         )
     else
