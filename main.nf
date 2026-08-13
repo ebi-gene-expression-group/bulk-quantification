@@ -10,6 +10,13 @@ if (!params.EXP_ID) {
     System.exit(1)
 }
 
+def EXP_ID_PATTERN = /^E-[A-Z]+-[0-9]+$/
+if (!(params.EXP_ID ==~ EXP_ID_PATTERN)) {
+    log.error "Invalid EXP_ID: ${params.EXP_ID}"
+    log.info  "EXP_ID must match E-<source>-<digits>, for example E-MTAB-1234."
+    System.exit(1)
+}
+
 // Check that ATLAS_PROD is defined in environment
 def atlasProd = System.getenv('ATLAS_PROD')
 if (!atlasProd) {
