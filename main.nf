@@ -78,6 +78,12 @@ params.outdir = "${nf_core_bulk_quantification}/${params.EXP_ID}"
 def results_dir = file(params.outdir)
 results_dir.mkdirs()
 
+params.batch_size = (params.batch_size ?: 0) as Integer
+if (params.batch_size < 0) {
+    log.error "Invalid --batch_size '${params.batch_size}'. Use 0 to disable batching, or a positive integer."
+    System.exit(1)
+}
+
 // Resume process RUN_RNASEQ?
 def resumeOpt = System.getenv('RESUME_RNASEQ') ?: ""
 
@@ -110,6 +116,60 @@ process GET_SAMPLES {
         -e "${endpoint_url}" \\
         -m "${era_public_s3_path}" \\
         -c "${fastq_rawdata_dir}"
+    """
+}
+
+process CREATE_BATCH_SAMPLESHEETS {
+
+    input:
+    path samplesheet
+    val  EXP_ID
+    val  batch_size
+
+    output:
+    path "batch_manifest.tsv", emit: manifest
+    path "batch_samplesheets/*.csv", emit: sheets
+
+    script:
+    """
+    set -euo pipefail
+
+    mkdir -p batch_samplesheets
+
+    header=\$(head -n1 "${samplesheet}")
+    total_lines=\$(wc -l < "${samplesheet}")
+    total_samples=\$(( total_lines - 1 ))
+
+    if [[ \$total_samples -le 0 ]]; then
+        echo "ERROR: Empty samplesheet generated for ${EXP_ID}: ${samplesheet}" >&2
+        exit 1
+    fi
+
+    if [[ ${batch_size} -le 0 || \$total_samples -le ${batch_size} ]]; then
+        batch_csv="batch_samplesheets/${EXP_ID}_batch_000001_samplesheet.csv"
+        cp "${samplesheet}" "\$batch_csv"
+    else
+        tail -n +2 "${samplesheet}" | split -l ${batch_size} -d -a 6 --numeric-suffixes=1 - "batch_samplesheets/${EXP_ID}_batch_"
+
+        for part in batch_samplesheets/${EXP_ID}_batch_*; do
+            rows_file="\${part}.rows"
+            mv "\${part}" "\${rows_file}"
+            csv_file="\${part}_samplesheet.csv"
+            {
+                echo "\$header"
+                cat "\${rows_file}"
+            } > "\${csv_file}"
+            rm -f "\${rows_file}"
+        done
+    fi
+
+    : > batch_manifest.tsv
+    for csv in \$(ls batch_samplesheets/${EXP_ID}_batch_*_samplesheet.csv | sort); do
+        batch_id=\$(basename "\$csv" | sed -E 's/^.*_batch_([0-9]{6})_samplesheet\.csv$/batch_\1/')
+        printf '%s\t%s\n' "\$batch_id" "\$(realpath "\$csv")" >> batch_manifest.tsv
+    done
+
+    echo "Prepared \$(wc -l < batch_manifest.tsv) batch samplesheet(s) for ${EXP_ID}"
     """
 }
 
@@ -168,24 +228,33 @@ process GET_STAR_PROFILE {
 // Run the nf-core/rnasesq workflow
 process RUN_RNASEQ {
 
-    publishDir params.outdir, mode: 'copy'
+    publishDir params.batch_size > 0 ? "${params.outdir}/batches" : "${params.outdir}", mode: 'copy', pattern: "*.rnaseq.done"
 
     input:
-    path samplesheet
+    tuple val(batch_id), path(samplesheet)
     val  EXP_ID
     path star_config
     path params_json, stageAs: "${EXP_ID}_params.json"
 
     output:
-    path "${EXP_ID}.rnaseq.done"
-    path "star_profile.log"
-    path "multiqc/star_salmon/multiqc_report.html"
+    tuple val(batch_id), path("${batch_id}.rnaseq.done"), emit: done
+    tuple val(batch_id), path("${batch_id}.multiqc_report.html"), emit: multiqc_html
+    tuple val(batch_id), path("${batch_id}.multiqc_data"), emit: multiqc_data
 
     script:
     """
     set -euo pipefail
 
-    echo "Running RNA-seq subworkflow for ${EXP_ID}"
+    if [[ ${params.batch_size} -gt 0 ]]; then
+        BATCH_OUTDIR="${params.outdir}/batches/${batch_id}"
+    else
+        BATCH_OUTDIR="${params.outdir}"
+    fi
+    BATCH_WORKDIR="${nf_workdir}/${EXP_ID}/nested_rnaseq/${batch_id}"
+    mkdir -p "\$BATCH_OUTDIR"
+    mkdir -p "\$BATCH_WORKDIR"
+
+    echo "Running RNA-seq subworkflow for ${EXP_ID} (${batch_id})"
 
     # Extract FASTA path from JSON
     if command -v jq &> /dev/null; then
@@ -276,9 +345,7 @@ process RUN_RNASEQ {
     fi
 
     STAR_PROFILE_USED="\$(basename "${star_config}")"
-    mkdir -p "${params.outdir}"
-    printf 'STAR_PROFILE_USED\t%s\n' "\${STAR_PROFILE_USED}" > "${params.outdir}/star_profile.log"
-    cp "${params.outdir}/star_profile.log" star_profile.log
+    printf 'STAR_PROFILE_USED\t%s\n' "\${STAR_PROFILE_USED}" > "\$BATCH_OUTDIR/star_profile.log"
 
     if [ ! -f "${workflow.projectDir}/subworkflows/rnaseq/main.nf" ]; then
         echo "ERROR: rnaseq subworkflow not found at ${workflow.projectDir}/subworkflows/rnaseq/main.nf. Did you run 'git submodule update --init --recursive'?" >&2
@@ -291,6 +358,8 @@ process RUN_RNASEQ {
         -c "${star_config}" \\
         -profile singularity \\
         \$BAM_INDEX \\
+        --input "${samplesheet}" \\
+        --outdir "\$BATCH_OUTDIR" \\
         --contaminant_screening kraken2_bracken \\
         --kraken_db "\${CONTAM_INDEX}" \\
         --without-wave \\
@@ -312,40 +381,224 @@ process RUN_RNASEQ {
         --ribo_database_manifest "\${RIBO_MANIFEST}" \\
         --sortmerna_index "\${RIBO_INDEX}" \\
         --multiqc_config ${workflow.projectDir}/conf/multiqc_star_profile.yaml \\
-        -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
+        -work-dir "\$BATCH_WORKDIR" \\
+        -with-trace "${params.outdir}/${EXP_ID}_${batch_id}_trace.tsv" \\
         -with-tower \\
-        -name "nf_core_rnaseq_${EXP_ID}" \\
+        -name "nf_core_rnaseq_${EXP_ID}_${batch_id}" \\
         ${resumeOpt}
-
-    nextflow clean -f
     
     # Stage multiqc HTML into task work dir for downstream processes
-    MULTIQC_HTML="${params.outdir}/multiqc/star_salmon/multiqc_report.html"
+    MULTIQC_HTML="\$BATCH_OUTDIR/multiqc/star_salmon/multiqc_report.html"
+    MULTIQC_DATA_DIR="\$BATCH_OUTDIR/multiqc/star_salmon/multiqc_data"
     if [ ! -f "\$MULTIQC_HTML" ]; then
         echo "ERROR: MultiQC report not found at \$MULTIQC_HTML" >&2
         exit 1
     fi
-    mkdir -p multiqc/star_salmon
-    cp "\$MULTIQC_HTML" multiqc/star_salmon/multiqc_report.html
+    if [ ! -d "\$MULTIQC_DATA_DIR" ]; then
+        echo "ERROR: MultiQC data directory not found at \$MULTIQC_DATA_DIR" >&2
+        exit 1
+    fi
+    cp "\$MULTIQC_HTML" "${batch_id}.multiqc_report.html"
+    cp -R "\$MULTIQC_DATA_DIR" "${batch_id}.multiqc_data"
+
+    # Cleanup nested nf-core work directory only after successful completion.
+    if [[ -d "\$BATCH_WORKDIR" ]]; then
+        rm -rf "\$BATCH_WORKDIR"
+    fi
 
     # Create done file only if workflow succeeded
-    touch "${EXP_ID}.rnaseq.done"
+    touch "${batch_id}.rnaseq.done"
     
     """
 }
 
-process MULTIQC_SANITISATION {
+process MERGE_BATCH_MULTIQC {
 
-    publishDir "${params.outdir}/multiqc/star_salmon", mode: 'copy', overwrite: true, pattern: "multiqc_report*.html"
-    publishDir params.outdir, mode: 'copy', pattern: "multiqc_sanitisation.done"
+    publishDir "${params.outdir}/multiqc_merged", mode: 'copy', overwrite: true
+
+    conda "bioconda::multiqc=1.27"
 
     input:
-    path multiqc_html
+    path multiqc_data_dirs
+    val  EXP_ID
+
+    output:
+    path "multiqc_report_all_batches.html", emit: merged_html
+    path "multiqc_data"
+    path "multiqc_merged.done"
+
+    when:
+    params.batch_size > 0
+
+    script:
+    def mqc_inputs = multiqc_data_dirs.collect { "\"${it}\"" }.join(' ')
+
+    """
+    set -euo pipefail
+
+    multiqc \
+        -f \
+        -o . \
+        -n multiqc_report_all_batches.html \
+        -c "${workflow.projectDir}/conf/multiqc_star_profile.yaml" \
+        ${mqc_inputs}
+
+    touch multiqc_merged.done
+    """
+}
+
+process MERGE_BATCH_COUNT_MATRICES {
+
+    publishDir "${params.outdir}/merged_counts", mode: 'copy', overwrite: true
+
+    conda "conda-forge::python=3.11 conda-forge::pandas=2.2"
+
+    input:
+    path rnaseq_done_files
+    val  EXP_ID
+
+    output:
+    path "star_salmon/salmon.merged.gene_counts.tsv", emit: gene_counts
+    path "star_salmon/salmon.merged.transcript_counts.tsv", emit: transcript_counts
+    path "star_salmon/salmon.merged.gene_tpm.tsv", emit: gene_tpm
+    path "star_salmon/salmon.merged.transcript_tpm.tsv", emit: transcript_tpm
+    path "merged_counts.done", emit: done
+
+    when:
+    params.batch_size > 0
+
+    script:
+    """
+    set -euo pipefail
+
+    mapfile -t batch_ids < <(ls *.rnaseq.done | sed 's/\.rnaseq\.done$//' | sort)
+    if [[ \${#batch_ids[@]} -eq 0 ]]; then
+        echo "ERROR: No batch completion markers found for ${EXP_ID}" >&2
+        exit 1
+    fi
+
+    batch_dirs=()
+    for batch_id in "\${batch_ids[@]}"; do
+        batch_dir="${params.outdir}/batches/\${batch_id}"
+        if [[ ! -d "\${batch_dir}" ]]; then
+            echo "ERROR: Missing batch output directory: \${batch_dir}" >&2
+            exit 1
+        fi
+        batch_dirs+=("\${batch_dir}")
+    done
+
+    python "${workflow.projectDir}/bin/merge_star_salmon_batch_matrices.py" \
+        --outdir . \
+        "\${batch_dirs[@]}"
+
+    touch merged_counts.done
+    """
+}
+
+process RECONSTRUCT_BATCH_OUTPUT_LAYOUT {
+
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true, pattern: "layout_reconstructed.done"
+
+    conda "conda-forge::python=3.11 conda-forge::pandas=2.2"
+
+    input:
+    path rnaseq_done_files
+    val  EXP_ID
+
+    output:
+    path "layout_reconstructed.done"
+
+    when:
+    params.batch_size > 0
+
+    script:
+    """
+    set -euo pipefail
+
+    mapfile -t batch_ids < <(ls *.rnaseq.done | sed 's/\.rnaseq\.done$//' | sort)
+    if [[ \${#batch_ids[@]} -eq 0 ]]; then
+        echo "ERROR: No batch completion markers found for ${EXP_ID}" >&2
+        exit 1
+    fi
+
+    batch_dirs=()
+    for batch_id in "\${batch_ids[@]}"; do
+        batch_dir="${params.outdir}/batches/\${batch_id}"
+        if [[ ! -d "\${batch_dir}" ]]; then
+            echo "ERROR: Missing batch output directory: \${batch_dir}" >&2
+            exit 1
+        fi
+        batch_dirs+=("\${batch_dir}")
+    done
+
+    tmp_merge_dir="${params.outdir}/.batch_layout_tmp"
+    rm -rf "\${tmp_merge_dir}"
+
+    python "${workflow.projectDir}/bin/merge_nfcore_batch_outputs.py" \
+        --outdir "\${tmp_merge_dir}" \
+        "\${batch_dirs[@]}"
+
+    # Sync reconstructed content into canonical output directory.
+    rsync -a "\${tmp_merge_dir}/" "${params.outdir}/"
+
+    rm -rf "\${tmp_merge_dir}"
+    touch layout_reconstructed.done
+    """
+}
+
+process MATERIALISE_BATCH_FINAL_OUTPUTS {
+
+    publishDir "${params.outdir}/star_salmon", mode: 'copy', overwrite: true, pattern: "salmon.merged.*.tsv"
+    publishDir "${params.outdir}/multiqc/star_salmon", mode: 'copy', overwrite: true, pattern: "multiqc_report.html"
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true, pattern: "final_outputs_materialised.done"
+
+    input:
+    path merged_multiqc_html
+    path merged_gene_counts
+    path merged_tx_counts
+    path merged_gene_tpm
+    path merged_tx_tpm
 
     output:
     path "multiqc_report.html"
-    path "multiqc_report_original.html"
-    path "multiqc_sanitisation.done"
+    path "salmon.merged.gene_counts.tsv"
+    path "salmon.merged.transcript_counts.tsv"
+    path "salmon.merged.gene_tpm.tsv"
+    path "salmon.merged.transcript_tpm.tsv"
+    path "final_outputs_materialised.done"
+
+    when:
+    params.batch_size > 0
+
+    script:
+    """
+    set -euo pipefail
+
+    cp "${merged_multiqc_html}" multiqc_report.html
+    cp "${merged_gene_counts}" salmon.merged.gene_counts.tsv
+    cp "${merged_tx_counts}" salmon.merged.transcript_counts.tsv
+    cp "${merged_gene_tpm}" salmon.merged.gene_tpm.tsv
+    cp "${merged_tx_tpm}" salmon.merged.transcript_tpm.tsv
+
+    touch final_outputs_materialised.done
+    """
+}
+
+process SANITISE_MERGED_MULTIQC {
+
+    publishDir "${params.outdir}/multiqc_merged", mode: 'copy', overwrite: true, pattern: "multiqc_report_all_batches*.html"
+    publishDir "${params.outdir}/multiqc_merged", mode: 'copy', pattern: "multiqc_sanitisation.done"
+
+    input:
+    path merged_multiqc_html
+
+    output:
+    path "multiqc_report_all_batches.html", emit: sanitized_html
+    path "multiqc_report_all_batches.original.html", emit: original_html
+    path "multiqc_sanitisation.done", emit: done
+
+    when:
+    params.batch_size > 0
 
     script:
     // Build sed expressions in Groovy
@@ -370,8 +623,53 @@ process MULTIQC_SANITISATION {
     """
     set -euo pipefail
 
-    cp "${multiqc_html}" multiqc_report_original.html
-    sed ${sed_string} multiqc_report_original.html > multiqc_report.html
+    cp "${merged_multiqc_html}" multiqc_report_all_batches.original.html
+    sed ${sed_string} multiqc_report_all_batches.original.html > multiqc_report_all_batches.html
+
+    touch multiqc_sanitisation.done
+    """
+}
+
+process SANITISE_SINGLE_MULTIQC {
+
+    publishDir "${params.outdir}/multiqc/star_salmon", mode: 'copy', overwrite: true, pattern: "multiqc_report.html"
+    publishDir "${params.outdir}", mode: 'copy', pattern: "multiqc_sanitisation.done"
+
+    input:
+    tuple val(batch_id), path(multiqc_html)
+
+    output:
+    path "multiqc_report.html"
+    path "multiqc_report.original.html"
+    path "multiqc_sanitisation.done"
+
+    when:
+    params.batch_size <= 0
+
+    script:
+    def esc = { it.toString().replaceAll(/([\\#&])/,'\\\\$1') }
+
+    def sed_cmds = []
+
+    if (referencePath)
+        sed_cmds << "-e 's#${esc(referencePath)}#BULK_REFERENCES_DIR#g'"
+
+    if (nf_workdir)
+        sed_cmds << "-e 's#${esc(nf_workdir)}#WORKDIR#g'"
+
+    if (params.outdir)
+        sed_cmds << "-e 's#${esc(params.outdir)}#OUT_DIR#g'"
+
+    if (workflow.projectDir)
+        sed_cmds << "-e 's#${esc(workflow.projectDir)}#GIT-REPO#g'"
+
+    def sed_string = sed_cmds.join(' ')
+
+    """
+    set -euo pipefail
+
+    cp "${multiqc_html}" multiqc_report.original.html
+    sed ${sed_string} multiqc_report.original.html > multiqc_report.html
 
     touch multiqc_sanitisation.done
     """
@@ -383,7 +681,7 @@ process CLEAN_FASTQS {
 
     input:
     path samplesheet
-    path rnaseq_done
+    path rnaseq_done_files
 
     output:
     path "fastq_cleanup.done"
@@ -400,12 +698,43 @@ process CLEAN_FASTQS {
 
 workflow {
     samplesheet = GET_SAMPLES(params.EXP_ID)
+
     SET_PARAMS(params.EXP_ID)
     star_config_ch = GET_STAR_PROFILE(SET_PARAMS.out.tax_id)
     params_json_ch = SET_PARAMS.out.params_json
-    (rnaseq_done, multiqc_html) = RUN_RNASEQ(samplesheet, params.EXP_ID, star_config_ch, params_json_ch)
-    MULTIQC_SANITISATION(multiqc_html)
-    CLEAN_FASTQS(samplesheet, rnaseq_done)
+
+    if (params.batch_size > 0) {
+        CREATE_BATCH_SAMPLESHEETS(samplesheet, params.EXP_ID, params.batch_size)
+        batch_manifest = CREATE_BATCH_SAMPLESHEETS.out.manifest
+
+        batch_inputs = batch_manifest
+            .splitCsv(header: false, sep: '\t')
+            .map { row -> tuple(row[0] as String, file(row[1] as String)) }
+
+        RUN_RNASEQ(batch_inputs, params.EXP_ID, star_config_ch, params_json_ch)
+
+        mqc_data_dirs_ch = RUN_RNASEQ.out.multiqc_data.map { it[1] }.collect()
+        rnaseq_done_files_ch = RUN_RNASEQ.out.done.map { it[1] }.collect()
+
+        MERGE_BATCH_MULTIQC(mqc_data_dirs_ch, params.EXP_ID)
+        MERGE_BATCH_COUNT_MATRICES(rnaseq_done_files_ch, params.EXP_ID)
+        RECONSTRUCT_BATCH_OUTPUT_LAYOUT(rnaseq_done_files_ch, params.EXP_ID)
+        SANITISE_MERGED_MULTIQC(MERGE_BATCH_MULTIQC.out.merged_html)
+        MATERIALISE_BATCH_FINAL_OUTPUTS(
+            SANITISE_MERGED_MULTIQC.out.sanitized_html,
+            MERGE_BATCH_COUNT_MATRICES.out.gene_counts,
+            MERGE_BATCH_COUNT_MATRICES.out.transcript_counts,
+            MERGE_BATCH_COUNT_MATRICES.out.gene_tpm,
+            MERGE_BATCH_COUNT_MATRICES.out.transcript_tpm
+        )
+        CLEAN_FASTQS(samplesheet, rnaseq_done_files_ch)
+    } else {
+        single_batch_inputs = Channel.of(tuple("batch_000001", samplesheet))
+        RUN_RNASEQ(single_batch_inputs, params.EXP_ID, star_config_ch, params_json_ch)
+        SANITISE_SINGLE_MULTIQC(RUN_RNASEQ.out.multiqc_html)
+        rnaseq_done_files_ch = RUN_RNASEQ.out.done.map { it[1] }.collect()
+        CLEAN_FASTQS(samplesheet, rnaseq_done_files_ch)
+    }
 }
 
 workflow.onComplete {
