@@ -712,9 +712,13 @@ workflow {
             .map { row -> tuple(row[0] as String, file(row[1] as String)) }
 
         RUN_RNASEQ(batch_inputs, params.EXP_ID, star_config_ch, params_json_ch)
-        MERGE_BATCH_MULTIQC(RUN_RNASEQ.out.multiqc_data.collect(), params.EXP_ID)
-        MERGE_BATCH_COUNT_MATRICES(RUN_RNASEQ.out.done.collect(), params.EXP_ID)
-        RECONSTRUCT_BATCH_OUTPUT_LAYOUT(RUN_RNASEQ.out.done.collect(), params.EXP_ID)
+
+        mqc_data_dirs_ch = RUN_RNASEQ.out.multiqc_data.map { it[1] }.collect()
+        rnaseq_done_files_ch = RUN_RNASEQ.out.done.map { it[1] }.collect()
+
+        MERGE_BATCH_MULTIQC(mqc_data_dirs_ch, params.EXP_ID)
+        MERGE_BATCH_COUNT_MATRICES(rnaseq_done_files_ch, params.EXP_ID)
+        RECONSTRUCT_BATCH_OUTPUT_LAYOUT(rnaseq_done_files_ch, params.EXP_ID)
         SANITISE_MERGED_MULTIQC(MERGE_BATCH_MULTIQC.out.merged_html)
         MATERIALISE_BATCH_FINAL_OUTPUTS(
             SANITISE_MERGED_MULTIQC.out.sanitized_html,
@@ -723,12 +727,13 @@ workflow {
             MERGE_BATCH_COUNT_MATRICES.out.gene_tpm,
             MERGE_BATCH_COUNT_MATRICES.out.transcript_tpm
         )
-        CLEAN_FASTQS(samplesheet, RUN_RNASEQ.out.done.collect())
+        CLEAN_FASTQS(samplesheet, rnaseq_done_files_ch)
     } else {
         single_batch_inputs = Channel.of(tuple("batch_000001", samplesheet))
         RUN_RNASEQ(single_batch_inputs, params.EXP_ID, star_config_ch, params_json_ch)
         SANITISE_SINGLE_MULTIQC(RUN_RNASEQ.out.multiqc_html)
-        CLEAN_FASTQS(samplesheet, RUN_RNASEQ.out.done.collect())
+        rnaseq_done_files_ch = RUN_RNASEQ.out.done.map { it[1] }.collect()
+        CLEAN_FASTQS(samplesheet, rnaseq_done_files_ch)
     }
 }
 
