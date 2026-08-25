@@ -149,7 +149,7 @@ process CREATE_BATCH_SAMPLESHEETS {
         batch_csv="batch_samplesheets/${EXP_ID}_batch_000001_samplesheet.csv"
         cp "${samplesheet}" "\$batch_csv"
     else
-        tail -n +2 "${samplesheet}" | split -l ${batch_size} -d -a 6 - "batch_samplesheets/${EXP_ID}_batch_"
+        tail -n +2 "${samplesheet}" | split -l ${batch_size} -d -a 6 --numeric-suffixes=1 - "batch_samplesheets/${EXP_ID}_batch_"
 
         for part in batch_samplesheets/${EXP_ID}_batch_*; do
             rows_file="\${part}.rows"
