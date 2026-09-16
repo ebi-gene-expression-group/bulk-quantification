@@ -1,0 +1,17 @@
+{
+  "input": "${EXP_ID}_samplesheet.csv",
+  "outdir": "${NF_CORE_BULK_QUANTIFICATION}/${EXP_ID}/",
+  "gtf": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Annotation/Genes/${SPECIES}.${ASSEMBLY}.${RELEASE}.gtf",
+  "fasta": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/WholeGenomeFasta/${SPECIES}.${ASSEMBLY}.dna.toplevel.fa",
+  "star_index": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/STARIndex/Ensembl_${RELEASE}/2.7.11b",
+  "salmon_index": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/SalmonIndex/Ensembl_${RELEASE}/1.10.3",
+  "transcript_fasta": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/TranscriptFasta/genome.transcripts.fa",
+  "star_ignore_sjdbgtf": true,
+  "skip_pseudo_alignment": true,
+  "without_wave": true,
+  "contamination_index": "${BULK_REFERENCES_DIR}/contamination/kraken2/kraken2_standard8",
+  "ribo_database_manifest": "${BULK_REFERENCES_DIR}/contamination/ribo/silva.manifest.tsv",
+  "ribo_database_index": "${BULK_REFERENCES_DIR}/contamination/ribo/silva/sortmerna",
+  "igenomes_ignore": true,
+  "igenomes_base": null
+}
