@@ -290,6 +290,7 @@ process RUN_RNASEQ {
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -c "${star_config}" \\
         -profile singularity \\
+        --use_parabricks_star ${params.use_parabricks_star} \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
         --kraken_db "\${CONTAM_INDEX}" \\
