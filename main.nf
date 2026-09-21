@@ -316,7 +316,7 @@ process RUN_RNASEQ {
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}" \\
-        ${resumeOpt}
+        ${resumeOpt} 2>&1 | tee "${params.outdir}/${EXP_ID}.nextflow.log"
 
     nextflow clean -f
     
