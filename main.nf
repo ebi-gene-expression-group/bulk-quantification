@@ -182,6 +182,7 @@ process RUN_RNASEQ {
     path "multiqc/star_salmon/multiqc_report.html"
 
     script:
+    def parabricks_star_index_option = params.use_parabricks_star ? '--star_index false' : ''
     """
     set -euo pipefail
 
@@ -290,6 +291,7 @@ process RUN_RNASEQ {
         -c "${workflow.projectDir}/conf/rnaseq.config" \\
         -c "${star_config}" \\
         -profile singularity \\
+        ${parabricks_star_index_option} \\
         --use_parabricks_star ${params.use_parabricks_star} \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
