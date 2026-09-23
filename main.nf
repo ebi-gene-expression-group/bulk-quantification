@@ -182,7 +182,41 @@ process RUN_RNASEQ {
     path "multiqc/star_salmon/multiqc_report.html"
 
     script:
-    def parabricks_star_index_option = params.use_parabricks_star ? '--star_index false' : ''
+    def parabricks_star_index = params.parabricks_star_index ?: params.star_index
+    // Reuse a saved Parabricks index only after it has been explicitly marked
+    // complete. Directory existence alone is not sufficient because an index
+    // may currently be under construction.
+    def has_precomputed_parabricks_index = params.use_parabricks_star &&
+        params.parabricks_star_index_ready == true &&
+        parabricks_star_index && new File(parabricks_star_index.toString()).isDirectory()
+    def parabricks_star_index_option = params.use_parabricks_star ?
+        (has_precomputed_parabricks_index ? "--star_index \"${parabricks_star_index}\"" : '--star_index false') : ''
+    // Parabricks does not emit the native STAR uniquely-mapped-reads line
+    // consumed by nf-core/rnaseq. Keep its BAMs in the workflow and use the
+    // independently generated SAMtools metrics for alignment QC instead.
+    def parabricks_min_mapped_reads_option = params.use_parabricks_star ? '--min_mapped_reads 0' : ''
+    // Translate the species-specific native STAR settings that have pbrun
+    // equivalents. Do not pass the complete STAR profile to Parabricks:
+    // several native STAR flags have no pbrun equivalent.
+    def star_profile_name = star_config.getName().replaceFirst(/\.config$/, '')
+    def parabricks_species_args = params.use_parabricks_star ? [
+        star_default:          '--max-out-filter-multimap 20 --max-intron-size 1000000',
+        star_yeast:            '--max-out-filter-multimap 20 --max-intron-size 5000',
+        star_dicot_plants:     '--max-out-filter-multimap 100 --max-intron-size 50000',
+        star_monocot_plants:   '--max-out-filter-multimap 20 --max-intron-size 20000',
+        star_protist:           '--max-out-filter-multimap 20 --max-intron-size 15000',
+        star_bryophytes_plants: '--max-out-filter-multimap 20 --max-intron-size 5000'
+    ][star_profile_name] ?: '' : ''
+    def parabricks_extra_star_args = params.use_parabricks_star ? [
+        params.extra_star_align_args,
+        parabricks_species_args
+    ].findAll { it }.join(' ') : ''
+    def parabricks_species_args_option = parabricks_extra_star_args ?
+        "--extra_star_align_args \"${parabricks_extra_star_args}\"" : ''
+    // Parabricks performs duplicate marking inside rna_fq2bam. Passing the
+    // generic skip flag would instead add --no-markdups to the pbrun command.
+    def markduplicates_option = params.use_parabricks_star ?
+        '--skip_markduplicates false' : '--skip_markduplicates'
     def multiqc_config = params.use_parabricks_star ?
         "${workflow.projectDir}/conf/multiqc_parabricks_profile.yaml" :
         "${workflow.projectDir}/conf/multiqc_star_profile.yaml"
@@ -295,6 +329,8 @@ process RUN_RNASEQ {
         -c "${star_config}" \\
         -profile singularity \\
         ${parabricks_star_index_option} \\
+        ${parabricks_min_mapped_reads_option} \\
+        ${parabricks_species_args_option} \\
         --use_parabricks_star ${params.use_parabricks_star} \\
         \$BAM_INDEX \\
         --contaminant_screening kraken2_bracken \\
@@ -311,7 +347,7 @@ process RUN_RNASEQ {
         --skip_biotype_qc \\
         --skip_stringtie \\
         --skip_deseq2_qc \\
-        --skip_markduplicates \\
+        ${markduplicates_option} \\
         --skip_bigwig \\
         --remove_ribo_rna \\
         --ribo_removal_tool sortmerna \\

@@ -4,6 +4,8 @@
   "gtf": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Annotation/Genes/${SPECIES}.${ASSEMBLY}.${RELEASE}.gtf",
   "fasta": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/WholeGenomeFasta/${SPECIES}.${ASSEMBLY}.dna.toplevel.fa",
   "star_index": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/STARIndex/Ensembl_${RELEASE}/2.7.11b",
+  "parabricks_star_index": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/STARIndex/Ensembl_${RELEASE}/2.7.2a",
+  "parabricks_star_index_ready": false,
   "salmon_index": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/SalmonIndex/Ensembl_${RELEASE}/1.10.3",
   "transcript_fasta": "${BULK_REFERENCES_DIR}/${SPECIES_lower}/Ensembl/${ASSEMBLY}/Sequence/TranscriptFasta/genome.transcripts.fa",
   "star_ignore_sjdbgtf": true,
