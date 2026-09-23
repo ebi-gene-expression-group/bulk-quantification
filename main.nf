@@ -183,6 +183,9 @@ process RUN_RNASEQ {
 
     script:
     def parabricks_star_index_option = params.use_parabricks_star ? '--star_index false' : ''
+    def multiqc_config = params.use_parabricks_star ?
+        "${workflow.projectDir}/conf/multiqc_parabricks_profile.yaml" :
+        "${workflow.projectDir}/conf/multiqc_star_profile.yaml"
     """
     set -euo pipefail
 
@@ -314,7 +317,7 @@ process RUN_RNASEQ {
         --ribo_removal_tool sortmerna \\
         --ribo_database_manifest "\${RIBO_MANIFEST}" \\
         --sortmerna_index "\${RIBO_INDEX}" \\
-        --multiqc_config ${workflow.projectDir}/conf/multiqc_star_profile.yaml \\
+        --multiqc_config ${multiqc_config} \\
         -with-trace "${params.outdir}/${EXP_ID}_trace.tsv" \\
         -with-tower \\
         -name "nf_core_rnaseq_${EXP_ID}" \\

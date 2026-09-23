@@ -1,0 +1,7 @@
+# Parabricks writes diagnostic progress logs using STAR-compatible filenames
+# (*.Log.final.out, *.Log.out and *.Log.progress.out). They are not STAR
+# summary logs and should not be parsed by MultiQC's STAR module.
+fn_ignore_files:
+  - "*.Log.final.out"
+  - "*.Log.out"
+  - "*.Log.progress.out"
