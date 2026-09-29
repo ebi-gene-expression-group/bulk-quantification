@@ -209,6 +209,7 @@ process RUN_RNASEQ {
     ][star_profile_name] ?: '' : ''
     def parabricks_extra_star_args = params.use_parabricks_star ? [
         params.extra_star_align_args,
+        params.parabricks_tmp_dir ? "--tmp-dir ${params.parabricks_tmp_dir}" : '',
         parabricks_species_args
     ].findAll { it }.join(' ') : ''
     def parabricks_species_args_option = parabricks_extra_star_args ?
