@@ -174,7 +174,7 @@ process RUN_RNASEQ {
     path samplesheet
     val  EXP_ID
     path star_config
-    path params_json, stageAs: "${EXP_ID}_params.json"
+    path params_json
 
     output:
     path "${EXP_ID}.rnaseq.done"
